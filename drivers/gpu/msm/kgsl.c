@@ -4675,6 +4675,7 @@ static int kgsl_dump_oom_info(int pid)
 	int count = 0;
 	mm_segment_t old_fs;
 	loff_t pos;
+	int i;
 
 	buff = (char*)kmalloc(PAGE_SIZE, GFP_KERNEL);
 	if(!buff) {
@@ -4712,7 +4713,7 @@ static int kgsl_dump_oom_info(int pid)
 		fp->f_pos = pos;
 		
 		s_start = buff;
-		for (int i = 0; i < count; i++) {
+		for (i = 0; i < count; i++) {
 			if (buff[i] == '\n') {
 				buff[i] = '\0';
 				pr_info("[Qcom_debug] %s\n",s_start);
@@ -4753,7 +4754,7 @@ static int kgsl_dump_oom_info(int pid)
 		fp->f_pos = pos;
 
 		s_start = buff;
-		for (int i = 0; i < count; i++) {
+		for (i = 0; i < count; i++) {
 			if(buff[i] == '\n'){
 				buff[i] = '\0';
 				pr_info("[Qcom_debug] %s\n",s_start);
