@@ -632,6 +632,7 @@ fail_rtc_enable:
 	return rc;
 }
 
+/*
 #ifdef CONFIG_ZTEMT_POWER_DEBUG
 static time_t rtc_suspend_sec = 0;
 static time_t rtc_resume_sec = 0;
@@ -678,6 +679,7 @@ static int print_resume_time(struct device *dev)
 	return 0;
 }
 #endif
+*/
 
 static int qpnp_rtc_remove(struct platform_device *pdev)
 {
