@@ -1,4 +1,5 @@
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/*
+ * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,16 +11,17 @@
  * GNU General Public License for more details.
  */
 
-/dts-v1/;
-
-#include "sm8150p-v2.dtsi"
-#include "sm8150-mtp.dtsi"
-
-/ {
-	model = "Qualcomm Technologies, Inc. SM8150P V2 MTP";
-	compatible = "qcom,sm8150p-mtp", "qcom,sm8150p", "qcom,mtp";
-	qcom,board-id = <8 0>;
+/* AWINIC AW8695 Haptic */
+&pm8150b_haptics{
+    status = "disabled";
 };
 
-#include "nubia/head.dtsi"
-
+&qupv3_se7_i2c {
+	aw8695_haptic@5A {
+		compatible = "awinic,aw8695_haptic";
+		reg = <0x5A>;
+		reset-gpio = <&tlmm 94 0>;
+		irq-gpio = <&tlmm 95 0>;
+		status = "okay";
+	};
+};

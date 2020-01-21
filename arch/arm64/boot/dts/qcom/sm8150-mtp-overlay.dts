@@ -27,6 +27,8 @@
 	qcom,board-id = <8 0>;
 };
 
-&dsi_sharp_4k_dsc_cmd_display {
+/*&dsi_sharp_4k_dsc_cmd_display {
 	qcom,dsi-display-active;
-};
+};*/
+
+#include "nubia/head.dtsi"

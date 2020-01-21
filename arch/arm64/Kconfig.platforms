@@ -342,4 +342,10 @@ config ARCH_ZYNQMP
 	help
 	  This enables support for Xilinx ZynqMP Family
 
+config ARCH_NUBIA_SM8150
+	bool "Compile main dtb for nubia devices"
+	depends on ARCH_SM8150
+	help
+	  Compile main dtb for nubia devices.
+
 endmenu

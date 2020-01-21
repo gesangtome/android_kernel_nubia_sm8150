@@ -181,3 +181,5 @@
 		qcom,msm-cpudai-tdm-data-align = <0>;
 	};
 };
+
+#include "nubia/audio.dtsi"

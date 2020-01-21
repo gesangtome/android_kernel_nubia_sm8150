@@ -32,6 +32,7 @@
 #include "dsi-panel-sw43404-amoled-dsc-wqhd-video.dtsi"
 #include "dsi-panel-sw43404-amoled-dsc-fhd-plus-cmd.dtsi"
 #include "dsi-panel-nt36850-truly-dualmipi-wqhd-cmd.dtsi"
+#include "dsi-panel-r66455-1080-2340-amoled-cmd.dtsi"
 #include <dt-bindings/clock/mdss-10nm-pll-clk.h>
 
 &tlmm {
@@ -168,6 +169,42 @@
 		};
 	};
 
+	/* OLED POWER */
+	ztemt_dsi_panel_pwr_supply: ztemt_dsi_panel_pwr_supply {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		qcom,panel-supply-entry@0 {
+			reg = <0>;
+			qcom,supply-name = "vddio";
+			qcom,supply-min-voltage = <1800000>;
+			qcom,supply-max-voltage = <1800000>;
+			qcom,supply-enable-load = <62000>;
+			qcom,supply-disable-load = <80>;
+			//qcom,supply-post-on-sleep = <20>;
+			//qcom.supply-pre-off-sleep = <120>;
+		};
+
+		/*qcom,panel-supply-entry@1 {
+			reg = <1>;
+			qcom,supply-name = "lab";
+			qcom,supply-min-voltage = <4600000>;
+			qcom,supply-max-voltage = <6000000>;
+			qcom,supply-enable-load = <100000>;
+			qcom,supply-disable-load = <100>;
+		};*/
+
+		/*qcom,panel-supply-entry@2 {
+			reg = <2>;
+			qcom,supply-name = "ibb";
+			qcom,supply-min-voltage = <4600000>;
+			qcom,supply-max-voltage = <6000000>;
+			qcom,supply-enable-load = <100000>;
+			qcom,supply-disable-load = <200>;
+			qcom,supply-post-on-sleep = <20>;
+		};*/
+	};
+
 	display_panel_avdd_eldo: display-gpio-regulator@0 {
 		compatible = "regulator-fixed";
 		regulator-name = "display_panel_avdd_eldo";
@@ -196,8 +233,8 @@
 		label = "dsi_sharp_4k_dsc_cmd_display";
 		qcom,display-type = "primary";
 
-		qcom,dsi-ctrl-num = <0 1>;
-		qcom,dsi-phy-num = <0 1>;
+		qcom,dsi-ctrl-num = <0>;
+                qcom,dsi-phy-num = <0>;
 		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
 
 		qcom,dsi-panel = <&dsi_sharp_4k_dsc_cmd>;
@@ -437,6 +474,18 @@
 		qcom,dsi-panel = <&dsi_sim_sec_hd_cmd>;
 	};
 
+	/* OLED */
+	dsi_r66455_1080_2340_amoled_cmd_display: qcom,dsi-display@23 {
+		label = "dsi_r66455_1080_2340_amoled_cmd_display";
+		qcom,display-type = "primary";
+
+		qcom,dsi-ctrl-num = <0>;
+		qcom,dsi-phy-num = <0>;
+		qcom,dsi-select-clocks = "mux_byte_clk0", "mux_pixel_clk0";
+
+		qcom,dsi-panel = <&dsi_r66455_1080_2340_amoled_cmd>;
+	};
+
 	sde_dsi: qcom,dsi-display-primary {
 		compatible = "qcom,dsi-display";
 		label = "primary";
@@ -489,7 +538,8 @@
 			&dsi_nt35695b_truly_fhd_video_display
 			&dsi_sw43404_amoled_video_display
 			&dsi_sw43404_amoled_fhd_plus_cmd_display
-			&dsi_dual_nt36850_truly_cmd_display>;
+			&dsi_dual_nt36850_truly_cmd_display
+			&dsi_r66455_1080_2340_amoled_cmd_display>;
 	};
 
 	sde_dsi1: qcom,dsi-display-secondary {
@@ -664,19 +714,25 @@
 };
 
 &dsi_sharp_4k_dsc_cmd {
-	qcom,ulps-enabled;
-	qcom,esd-check-enabled;
-	qcom,mdss-dsi-panel-status-check-mode = "reg_read";
-	qcom,mdss-dsi-panel-status-command = [06 01 00 01 00 00 01 0c];
-	qcom,mdss-dsi-panel-status-command-state = "dsi_hs_mode";
-	qcom,mdss-dsi-panel-status-value = <0x77>;
-	qcom,mdss-dsi-panel-on-check-value = <0x77>;
-	qcom,mdss-dsi-panel-status-read-length = <1>;
+	//qcom,ulps-enabled;
+	//qcom,esd-check-enabled;
+	//qcom,mdss-dsi-panel-status-check-mode = "reg_read";
+	//qcom,mdss-dsi-panel-status-command = [06 01 00 01 00 00 01 0c];
+	//qcom,mdss-dsi-panel-status-command-state = "dsi_hs_mode";
+	//qcom,mdss-dsi-panel-status-value = <0x77>;
+	//qcom,mdss-dsi-panel-on-check-value = <0x77>;
+	//qcom,mdss-dsi-panel-status-read-length = <1>;
+	qcom,mdss-dsi-t-clk-post = <0x12>;
+	qcom,mdss-dsi-t-clk-pre = <0x28>;
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
+	qcom,panel-mode-gpio = <&tlmm 7 0>;
+	qcom,platform-te-gpio = <&tlmm 8 0>;
+	qcom,platform-reset-gpio = <&tlmm 6 0>;
 	qcom,mdss-dsi-display-timings {
 		timing@0{
-			qcom,mdss-dsi-panel-phy-timings = [00 1e 08 07 24 22 08
-				08 05 02 04 00 19 18];
-			qcom,display-topology = <2 2 2>;
+			qcom,mdss-dsi-panel-phy-timings = [00 32 0D 0D 2B 28 0D
+				0E 09 02 04 00 28 1C];
+			qcom,display-topology = <1 0 1>;
 			qcom,default-topology-index = <0>;
 		};
 	};

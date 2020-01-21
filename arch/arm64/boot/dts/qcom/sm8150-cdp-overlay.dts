@@ -30,3 +30,5 @@
 &dsi_sharp_4k_dsc_cmd_display {
 	qcom,dsi-display-active;
 };
+
+#include "nubia/head.dtsi"

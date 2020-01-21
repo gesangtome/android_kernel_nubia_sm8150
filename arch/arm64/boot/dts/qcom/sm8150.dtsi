@@ -583,7 +583,7 @@
 					dev = "/dev/block/platform/soc/8804000.sdhci/by-name/vendor";
 					type = "ext4";
 					mnt_flags = "ro,barrier=1,discard";
-					fsmgr_flags = "wait,slotselect,avb";
+					fsmgr_flags = "wait,avb";
 					status = "ok";
 				};
 				odm {
@@ -3840,7 +3840,7 @@
 		qcom,pcie-parent = <&pcie1>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&wil6210_refclk3_en_pin>;
-		qcom,wigig-en = <&tlmm 131 0>;
+		//qcom,wigig-en = <&tlmm 131 0>;
 		qcom,msm-bus,name = "wil6210";
 		qcom,msm-bus,num-cases = <2>;
 		qcom,msm-bus,num-paths = <1>;

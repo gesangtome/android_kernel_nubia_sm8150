@@ -76,6 +76,16 @@
 			output-low;
 		};
 	};
+
+	/* Fan reset PMIC GPIO */
+        fan_gpio11 {
+		fan_gpio11_default: fan_gpio11_default {
+			pins = "gpio11";
+			function = "normal";
+			power-source = <0>;
+			output-low;
+		};
+	};
 };
 
 &pm8150b_charger {

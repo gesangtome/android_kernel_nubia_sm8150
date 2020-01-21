@@ -240,7 +240,7 @@
 };
 
 &sdhc_2 {
-	vdd-supply = <&pm8150l_l9>;
+	//vdd-supply = <&pm8150l_l9>;
 	qcom,vdd-voltage-level = <2950000 2960000>;
 	qcom,vdd-current-level = <200 800000>;
 
