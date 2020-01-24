@@ -42,6 +42,9 @@ struct usb_extcon_info {
 
 	unsigned long debounce_jiffies;
 	struct delayed_work wq_detcable;
+#ifdef CONFIG_NUBIA_USB2_DOCK_SWITCH
+	bool is_enabled;
+#endif
 };
 
 static const unsigned int usb_extcon_cable[] = {
@@ -109,6 +112,85 @@ static irqreturn_t usb_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+#ifdef CONFIG_NUBIA_USB2_DOCK_SWITCH
+static int usb_extcon_set_enable(struct usb_extcon_info *info, bool enable)
+{
+	struct device *dev = info->dev;
+	int ret;
+
+	if (enable == info->is_enabled) {
+		dev_err(dev, "already %s\n", enable? "enabled": "disabled");
+		return 0;
+	}
+
+	if (enable) {
+		ret = pinctrl_pm_select_default_state(dev);
+		if (ret < 0)
+			return ret;
+		if (info->id_gpiod)
+			enable_irq(info->id_irq);
+		if (info->vbus_gpiod)
+			enable_irq(info->vbus_irq);
+
+		queue_delayed_work(system_power_efficient_wq,
+				   &info->wq_detcable, 0);
+		info->is_enabled = true;
+		dev_err(dev, "enable usb extcon\n");
+	} else {
+		extcon_set_state_sync(info->edev, EXTCON_USB_HOST, false);
+		extcon_set_state_sync(info->edev, EXTCON_USB, false);
+		if (info->id_gpiod)
+			disable_irq(info->id_irq);
+		if (info->vbus_gpiod)
+			disable_irq(info->vbus_irq);
+
+		ret = pinctrl_pm_select_sleep_state(dev);
+		if (ret < 0) {
+			if (info->id_gpiod)
+				enable_irq(info->id_irq);
+			if (info->vbus_gpiod)
+				enable_irq(info->vbus_irq);
+			return ret;
+		}
+		info->is_enabled = false;
+		dev_err(dev, "disable usb extcon\n");
+	}
+	return ret;
+}
+
+static ssize_t enable_show(struct device *dev, struct device_attribute *attr,
+		char *buf)
+{
+	struct usb_extcon_info *info = dev_get_drvdata(dev);
+
+	return sprintf(buf, "%d\n", info->is_enabled);
+}
+
+static ssize_t enable_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct usb_extcon_info *info = dev_get_drvdata(dev);
+	int val;
+
+	if (kstrtoint(buf, 0, &val))
+		return -EINVAL;
+
+	switch (val) {
+	case 0:
+		usb_extcon_set_enable(info, false);
+		break;
+	case 1:
+		usb_extcon_set_enable(info, true);
+		break;
+	default:
+		dev_err(dev, "Invalid argument\n");
+		return -EINVAL;
+	}
+	return count;
+}
+static DEVICE_ATTR_RW(enable);
+#endif
+
 static int usb_extcon_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -155,6 +237,10 @@ static int usb_extcon_probe(struct platform_device *pdev)
 		dev_err(dev, "failed to register extcon device\n");
 		return ret;
 	}
+
+#ifdef CONFIG_NUBIA_USB2_DOCK_SWITCH
+	device_create_file(&pdev->dev, &dev_attr_enable);
+#endif
 
 	if (info->id_gpiod)
 		ret = gpiod_set_debounce(info->id_gpiod,
@@ -205,10 +291,16 @@ static int usb_extcon_probe(struct platform_device *pdev)
 	}
 
 	platform_set_drvdata(pdev, info);
+#ifdef CONFIG_NUBIA_USB2_DOCK_SWITCH
+	device_init_wakeup(&pdev->dev, false);
+	info->is_enabled = true;
+	usb_extcon_set_enable(info, false);
+#else
 	device_init_wakeup(&pdev->dev, true);
 
 	/* Perform initial detection */
 	usb_extcon_detect_cable(&info->wq_detcable.work);
+#endif
 
 	return 0;
 }
@@ -219,6 +311,9 @@ static int usb_extcon_remove(struct platform_device *pdev)
 
 	cancel_delayed_work_sync(&info->wq_detcable);
 	device_init_wakeup(&pdev->dev, false);
+#ifdef CONFIG_NUBIA_USB2_DOCK_SWITCH
+	device_remove_file(&pdev->dev, &dev_attr_enable);
+#endif
 
 	return 0;
 }
@@ -228,6 +323,12 @@ static int usb_extcon_suspend(struct device *dev)
 {
 	struct usb_extcon_info *info = dev_get_drvdata(dev);
 	int ret = 0;
+
+#ifdef CONFIG_NUBIA_USB2_DOCK_SWITCH
+	if (!info->is_enabled) {
+		return 0;
+	}
+#endif
 
 	if (device_may_wakeup(dev)) {
 		if (info->id_gpiod) {
@@ -266,6 +367,12 @@ static int usb_extcon_resume(struct device *dev)
 {
 	struct usb_extcon_info *info = dev_get_drvdata(dev);
 	int ret = 0;
+
+#ifdef CONFIG_NUBIA_USB2_DOCK_SWITCH
+	if (!info->is_enabled) {
+		return 0;
+	}
+#endif
 
 	if (!device_may_wakeup(dev))
 		pinctrl_pm_select_default_state(dev);

@@ -1288,4 +1288,16 @@ config TOUCHSCREEN_SYNAPTICS_TCM
 
 source "drivers/input/touchscreen/synaptics_tcm/Kconfig"
 
+config TOUCHSCREEN_NUBIA_BACK_GOODIX
+        bool "NUBIA GOODIX BACK DEVICE"
+        default n
+
+source "drivers/input/touchscreen/goodix_gtx8_back/Kconfig"
+
+config TOUCHSCREEN_NUBIA_FRONT_GOODIX
+        bool "NUBIA GOODIX FRONT DEVICE"
+        default n
+
+source "drivers/input/touchscreen/goodix_gtx8_front/Kconfig"
+
 endif

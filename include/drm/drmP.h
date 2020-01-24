@@ -172,6 +172,8 @@ struct pci_controller;
  * \param fmt printf() like format string.
  * \param arg arguments
  */
+#define DRM_NUBIA_DEBUG(fmt, ...)				\
+	drm_printk(KERN_DEBUG, DRM_UT_LEASE, fmt, ##__VA_ARGS__)
 #define DRM_DEV_ERROR(dev, fmt, ...)					\
 	drm_dev_printk(dev, KERN_ERR, DRM_UT_NONE, __func__, " *ERROR*",\
 		       fmt, ##__VA_ARGS__)

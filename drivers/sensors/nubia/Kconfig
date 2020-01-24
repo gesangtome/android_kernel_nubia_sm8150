@@ -1,0 +1,35 @@
+config NUBIA_SENSORS_HALL_DEVICE
+	tristate "hall devicedriver"
+	depends on NUBIA_SENSORS
+	default n
+	help
+	  If you say yes here you get support for hall device
+
+config NUBIA_SENSORS_BACK_TMD2725
+	tristate "support litehole light/prox sensor driver"
+	depends on NUBIA_SENSORS
+	default n
+	help
+	  nubia ambient && prox device of tmd2725
+
+config NUBIA_DOUBLE_SENSORS
+	tristate "support double proximity and light sensor driver"
+	depends on NUBIA_SENSORS
+	default n
+	help
+	  nubia device of double ps and als
+
+config NUBIA_SENSORS_FRONT_RGB_BH1745
+	tristate "support front rgb bh1745 driver"
+	depends on NUBIA_DOUBLE_SENSORS
+	default n
+	help
+	  nubia front rgb device
+
+config NUBIA_SENSORS_FRONT_PS_STK3332
+	tristate "support front proximity driver"
+	depends on NUBIA_DOUBLE_SENSORS
+	default n
+	help
+	  nubia device of front proximit
+

@@ -536,6 +536,11 @@ config ICNSS
 	  control messages to FW over QMI channel. It is also responsible for
 	  handling WLAN PD restart notifications.
 
+config NUBIA_NSS
+	bool "change nubia linkspeed"
+	help
+	  Only NX627 change
+
 config ICNSS_DEBUG
 	bool "ICNSS debug support"
 	depends on ICNSS

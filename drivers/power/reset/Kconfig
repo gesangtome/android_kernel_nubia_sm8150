@@ -143,6 +143,20 @@ config POWER_RESET_QCOM_VM
 	  Say Y here if you have a MSM virtual machine and wish to enable
 	  restart driver.
 
+config NUBIA_PANIC_BOOTMODE
+	bool "nubia panic bootmode"
+	depends on POWER_RESET_QCOM
+	default n
+	help
+	  nubia panic bootmode.
+
+config NUBIA_RESTART_BOOTMODE
+	bool "nubia restart bootmode"
+	depends on POWER_RESET_QCOM
+	default n
+	help
+	  nubia restart bootmode.
+
 config QCOM_DLOAD_MODE
 	bool "Qualcomm Technologies, Inc. download mode"
 	depends on POWER_RESET_QCOM

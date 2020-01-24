@@ -1,0 +1,5 @@
+obj-$(CONFIG_NUBIA_FINGERPRINT)	+= sunwave/
+obj-$(CONFIG_NUBIA_FINGERPRINT)	+= gf5288/
+obj-$(CONFIG_NUBIA_FINGERPRINT)	+= silead/
+obj-$(CONFIG_NUBIA_FINGERPRINT)	+= silead/
+obj-$(CONFIG_NUBIA_FINGERPRINT)	+= silead/

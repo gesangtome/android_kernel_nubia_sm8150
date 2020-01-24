@@ -808,6 +808,9 @@ int sde_core_perf_init(struct sde_core_perf *perf,
 		struct sde_power_client *pclient,
 		char *clk_name)
 {
+#ifdef CONFIG_NUBIA_FPS_DYNAMIC
+	struct sde_perf_cfg *cfg;
+#endif
 	if (!perf || !dev || !catalog || !phandle || !pclient || !clk_name) {
 		SDE_ERROR("invalid parameters\n");
 		return -EINVAL;
@@ -836,6 +839,12 @@ int sde_core_perf_init(struct sde_core_perf *perf,
 		SDE_DEBUG("optional max core clk rate, use default\n");
 		perf->max_core_clk_rate = SDE_PERF_DEFAULT_MAX_CORE_CLK_RATE;
 	}
+#ifdef CONFIG_NUBIA_FPS_DYNAMIC
+	cfg = &perf->catalog->perf;
+	perf->perf_tune.min_core_clk = perf->max_core_clk_rate;
+	perf->perf_tune.min_bus_vote = (u64) cfg->max_bw_high * 1000;
+	perf->perf_tune.mode = SDE_PERF_MODE_MINIMUM;
+#endif
 
 	return 0;
 

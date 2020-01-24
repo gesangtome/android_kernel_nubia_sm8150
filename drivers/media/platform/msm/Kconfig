@@ -57,6 +57,14 @@ if MSMB_CAMERA
 source "drivers/media/platform/msm/camera_v2/Kconfig"
 endif # MSMB_CAMERA
 
+config TCS3707
+	tristate "tcs3707 awb sensor"
+	depends on I2C
+	help
+	  Say Y here if you want to use awb sensor through I2C interface.
+	  To compile this driver as a module, choose M here: the
+	  module will be called tcs3707.
+
 source "drivers/media/platform/msm/vidc/Kconfig"
 source "drivers/media/platform/msm/sde/Kconfig"
 source "drivers/media/platform/msm/npu/Kconfig"

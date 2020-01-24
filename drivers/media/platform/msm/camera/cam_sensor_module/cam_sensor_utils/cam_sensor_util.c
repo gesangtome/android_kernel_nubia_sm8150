@@ -21,6 +21,25 @@
 #define VALIDATE_VOLTAGE(min, max, config_val) ((config_val) && \
 	(config_val >= min) && (config_val <= max))
 
+static struct cam_sensor_i2c_reg_array *reg_tmp_setting;
+
+int cam_sensor_alloc_buffer(uint32_t size)
+{
+	int rc = 0;
+
+	reg_tmp_setting = (struct cam_sensor_i2c_reg_array *)
+		kcalloc(size, sizeof(struct cam_sensor_i2c_reg_array),GFP_KERNEL);
+
+	if (reg_tmp_setting == NULL) {
+		CAM_ERR(CAM_SENSOR, "[FX_SKIP2] cam_sensor_alloc_buffer error");
+		rc = -1;
+	} else {
+		rc = 0;
+	}
+
+	return rc;
+}
+
 static struct i2c_settings_list*
 	cam_sensor_get_i2c_ptr(struct i2c_settings_array *i2c_reg_settings,
 		uint32_t size)
@@ -35,6 +54,12 @@ static struct i2c_settings_list*
 			&(i2c_reg_settings->list_head));
 	else
 		return NULL;
+
+	if ((2688 == size) && (reg_tmp_setting != NULL)) {
+		tmp->i2c_settings.reg_setting = reg_tmp_setting;
+		tmp->i2c_settings.size = size;
+		return tmp;
+	}
 
 	tmp->i2c_settings.reg_setting = (struct cam_sensor_i2c_reg_array *)
 		vzalloc(size * sizeof(struct cam_sensor_i2c_reg_array));
@@ -52,10 +77,29 @@ int32_t delete_request(struct i2c_settings_array *i2c_array)
 {
 	struct i2c_settings_list *i2c_list = NULL, *i2c_next = NULL;
 	int32_t rc = 0;
+	int32_t skip_free = 0;
 
 	if (i2c_array == NULL) {
 		CAM_ERR(CAM_SENSOR, "FATAL:: Invalid argument");
 		return -EINVAL;
+	}
+
+	list_for_each_entry(i2c_list, &(i2c_array->list_head), list) {
+		if (2688 == i2c_list->i2c_settings.size) {
+			skip_free = 1;
+		}
+	}
+
+	if (skip_free && (reg_tmp_setting != NULL)) {
+		list_for_each_entry_safe(i2c_list, i2c_next,
+			&(i2c_array->list_head), list) {
+			list_del(&(i2c_list->list));
+			kfree(i2c_list);
+		}
+		INIT_LIST_HEAD(&(i2c_array->list_head));
+		i2c_array->is_settings_valid = 0;
+
+		return rc;
 	}
 
 	list_for_each_entry_safe(i2c_list, i2c_next,

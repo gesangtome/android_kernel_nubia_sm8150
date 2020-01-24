@@ -1,0 +1,17 @@
+#
+# NUBIA Fingerprint configuration
+#
+
+menuconfig NUBIA_FINGERPRINT
+	tristate "Nubia Fingerprint support"
+	default n
+	help
+	  This menu enables a Nubia Fingerprint driver.
+
+if NUBIA_FINGERPRINT
+
+source drivers/fingerprint/sunwave/Kconfig
+source drivers/fingerprint/silead/Kconfig
+source drivers/fingerprint/gf5288/Kconfig
+
+endif

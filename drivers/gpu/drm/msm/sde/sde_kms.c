@@ -1093,6 +1093,19 @@ void sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 		memset(splash_display, 0x0, sizeof(struct sde_splash_display));
 
 	}
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	if (i == 0) {
+		if (!sde_kms->splash_data.splash_display[1].cont_splash_enabled) {
+			_sde_kms_splash_mem_put(sde_kms, sde_kms->splash_data.splash_display[1].splash);
+			sde_kms->splash_data.num_splash_displays = 0;
+			SDE_ERROR("cont_splash handoff done for dpy:%d remaining:%d\n",
+				1, sde_kms->splash_data.num_splash_displays);
+			memset(&sde_kms->splash_data.splash_display[1], 0x0, sizeof(struct sde_splash_display));
+		} else {
+		}
+	}
+	pr_err("crtc%d, active=%d, cnt=%d\n", crtc->base.id, crtc->state->active, sde_kms->splash_data.num_splash_displays);
+#endif
 
 	/* remove the votes if all displays are done with splash */
 	if (!sde_kms->splash_data.num_splash_displays) {
@@ -2654,7 +2667,12 @@ static bool sde_kms_check_for_splash(struct msm_kms *kms)
 }
 
 static void _sde_kms_null_commit(struct drm_device *dev,
-		struct drm_encoder *enc)
+		struct drm_encoder *enc
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+		,bool active
+#endif
+		)
+
 {
 	struct drm_modeset_acquire_ctx ctx;
 	struct drm_connector *conn = NULL;
@@ -2708,7 +2726,11 @@ retry:
 		goto end;
 	}
 
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	crtc_state->active = active;
+#else
 	crtc_state->active = true;
+#endif
 	drm_atomic_set_crtc_for_connector(conn_state, enc->crtc);
 
 	drm_atomic_commit(state);
@@ -2746,8 +2768,13 @@ static int sde_kms_pm_suspend(struct device *dev)
 
 	/* if a display stuck in CS trigger a null commit to complete handoff */
 	drm_for_each_encoder(enc, ddev) {
-		if (sde_encoder_in_cont_splash(enc) && enc->crtc)
+		if (sde_encoder_in_cont_splash(enc) && enc->crtc) {
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+			_sde_kms_null_commit(ddev, enc, true);
+#else
 			_sde_kms_null_commit(ddev, enc);
+#endif
+		}
 	}
 
 	/* acquire modeset lock(s) */
@@ -3599,6 +3626,29 @@ end:
 	return rc;
 }
 
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+static void sde_kms_sec_splash_release_work(struct work_struct *work)
+{
+	struct sde_kms *sde_kms;
+	struct drm_encoder *enc;
+
+	sde_kms = container_of(to_delayed_work(work),
+	struct sde_kms, splash_work);
+
+	if (!sde_kms) {
+		SDE_ERROR("not able to get sde_kms object\n");
+		return;
+	}
+
+	drm_for_each_encoder(enc, sde_kms->dev) {
+		if (sde_encoder_in_cont_splash(enc) && enc->crtc && enc->crtc->index == 1) {
+			_sde_kms_null_commit(sde_kms->dev, enc, true);
+			_sde_kms_null_commit(sde_kms->dev, enc, false);
+		}
+	}
+}
+#endif
+
 struct msm_kms *sde_kms_init(struct drm_device *dev)
 {
 	struct msm_drm_private *priv;
@@ -3619,7 +3669,10 @@ struct msm_kms *sde_kms_init(struct drm_device *dev)
 
 	msm_kms_init(&sde_kms->base, &kms_funcs);
 	sde_kms->dev = dev;
-
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	INIT_DELAYED_WORK(&sde_kms->splash_work,
+			sde_kms_sec_splash_release_work);
+#endif
 	return &sde_kms->base;
 }
 

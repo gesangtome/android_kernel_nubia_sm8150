@@ -223,4 +223,8 @@ source "drivers/esoc/Kconfig"
 
 source "techpack/data/drivers/Kconfig"
 
+source "drivers/fingerprint/Kconfig"
+
+source "drivers/nubia_hw_version/Kconfig"
+
 endmenu

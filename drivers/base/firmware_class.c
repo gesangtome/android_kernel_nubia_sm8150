@@ -385,7 +385,13 @@ static const char * const fw_path[] = {
 	"/lib/firmware/updates/" UTS_RELEASE,
 	"/lib/firmware/updates",
 	"/lib/firmware/" UTS_RELEASE,
-	"/lib/firmware"
+	"/lib/firmware",
+	"/vendor/firmware_mnt",
+	"/vendor/firmware",
+#ifdef CONFIG_NUBIA_LED_AW22XXX
+	"/data/multicolor_led/" UTS_RELEASE,
+	"/data/multicolor_led"
+#endif
 };
 
 /*

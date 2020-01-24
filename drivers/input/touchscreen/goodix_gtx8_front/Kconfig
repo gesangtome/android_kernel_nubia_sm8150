@@ -1,0 +1,34 @@
+#
+# Goodix touchscreen driver configuration
+#
+
+config TOUCHSCREEN_NUBIA_FRONT_GOODIX_GTX8_UPDATE
+	tristate "Goodix GTx8 firmware update module"
+	default n
+	help
+	  Say Y here to enable support for doing firmware update.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here.
+
+config TOUCHSCREEN_NUBIA_FRONT_GOODIX_GTX8_GESTURE
+	tristate "Goodix GTx8 gesture wakeup feature"
+	default n
+	help
+	  Say Y here to enable support for gesture wakeup feature..
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here.
+
+config TOUCHSCREEN_NUBIA_FRONT_GOODIX_GTX8_TOOLS
+	tristate "Goodix touch tools support"
+	default n
+	help
+	  Say Y here to enable debug tools.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here.
+

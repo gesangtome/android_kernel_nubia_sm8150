@@ -337,6 +337,11 @@
 
 #define KEY_MICMUTE		248	/* Mute / unmute the microphone */
 
+#ifdef CONFIG_NUBIA_DOUBLE_PWRKEY
+#define KEY_LEFTPWR		249	/* Nubia left power flag*/
+#define KEY_RIGHTPWR		250	/* Nubia right power flag*/
+#endif
+
 /* Code 255 is reserved for special needs of AT keyboard driver */
 
 #define BTN_MISC		0x100
@@ -417,6 +422,10 @@
 #define BTN_WHEEL		0x150
 #define BTN_GEAR_DOWN		0x150
 #define BTN_GEAR_UP		0x151
+
+#ifdef CONFIG_INPUT_CS_PRESS_F61	/*add for nubia cs_press*/
+#define BTN_CS_PRESS            0x152
+#endif
 
 #define KEY_OK			0x160
 #define KEY_SELECT		0x161
@@ -603,6 +612,11 @@
 #define KEY_VOICECOMMAND		0x246	/* Listening Voice Command */
 #define KEY_ASSISTANT		0x247	/* AL Context-aware desktop assistant */
 
+#ifdef CONFIG_NUBIA_CYPRESS_KEYBOARD_GAMEFIRE
+#define KEY_GAMEFIRE_LEFT	0x248   /* Nubia game fire key left*/
+#define KEY_GAMEFIRE_RIGHT	0x249   /* Nubia game fire key right*/
+#endif
+
 #define KEY_BRIGHTNESS_MIN		0x250	/* Set Brightness to Minimum */
 #define KEY_BRIGHTNESS_MAX		0x251	/* Set Brightness to Maximum */
 
@@ -750,6 +764,11 @@
 
 #define ABS_MISC		0x28
 
+#ifdef CONFIG_INPUT_CS_PRESS_F61		/*add for nubia cs_press*/
+#define ABS_CS_PRESS_LEFT_BTN	0x29
+#define ABS_CS_PRESS_RIGHT_BTN	0x2a
+#endif
+
 /*
  * 0x2e is reserved and should not be used in input drivers.
  * It was used by HID as ABS_MISC+6 and userspace needs to detect if
@@ -805,6 +824,9 @@
 #define SW_HPHR_OVERCURRENT	0x11  /* set = over current on right hph */
 #define SW_MICROPHONE2_INSERT	0x12  /* set = inserted */
 #define SW_UNSUPPORT_INSERT	0x13  /* set = unsupported device inserted */
+#ifdef CONFIG_NUBIA_KEYBOARD_GAMESWITCH
+#define KEY_GAME_SWITCH		0x19
+#endif
 #define SW_MAX			0x20
 #define SW_CNT			(SW_MAX+1)
 
