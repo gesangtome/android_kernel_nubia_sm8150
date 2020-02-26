@@ -3,6 +3,10 @@
 # Makefile for the Linux proc filesystem routines.
 #
 
+ifdef CONFIG_KSM
+ccflags-$(CONFIG_KSM) += -Wno-section
+endif
+
 obj-y   += proc.o
 
 CFLAGS_task_mmu.o	+= $(call cc-option,-Wno-override-init,)
