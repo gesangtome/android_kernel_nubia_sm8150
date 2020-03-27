@@ -61,10 +61,12 @@ sm8150-sdx50m-cdp-overlay.dtbo-base := sm8150p.dtb sm8150p-v2.dtb sm8150.dtb sm8
 sm8150-qrd-overlay.dtbo-base := sm8150p.dtb sm8150p-v2.dtb sm8150.dtb sm8150-v2.dtb nubia_mp-data.dtb
 sm8150-rumi-overlay.dtbo-base := sm8150p.dtb sm8150p-v2.dtb sm8150.dtb sm8150-v2.dtb nubia_mp-data.dtb
 sm8150-sdx50m-mtp-2.5k-panel-overlay.dtbo-base := sm8150p.dtb sm8150p-v2.dtb sm8150.dtb sm8150-v2.dtb nubia_mp-data.dtb
-sa8155-adp-star-overlay.dtbo-base := sa8155.dtb sa8155-v2.dtb sa8155p.dtb sa8155p-v2.dtb nubia_mp-data.dtb
-sa8155p-adp-star-overlay.dtbo-base := sa8155.dtb sa8155-v2.dtb sa8155p.dtb sa8155p-v2.dtb nubia_mp-data.dtb
-sa8155-v2-adp-air-overlay.dtbo-base := sa8155.dtb sa8155-v2.dtb sa8155p.dtb sa8155p-v2.dtb nubia_mp-data.dtb
-sa8155p-v2-adp-air-overlay.dtbo-base := sa8155.dtb sa8155-v2.dtb sa8155p.dtb sa8155p-v2.dtb nubia_mp-data.dtb
+sa8155-adp-star-overlay.dtbo-base := sa8155.dtb sa8155-v2.dtb nubia_mp-data.dtb
+sa8155p-adp-star-overlay.dtbo-base := sa8155p.dtb sa8155p-v2.dtb nubia_mp-data.dtb
+sa8155-v2-adp-air-overlay.dtbo-base := sa8155.dtb sa8155-v2.dtb nubia_mp-data.dtb
+sa8155p-v2-adp-air-overlay.dtbo-base := sa8155p.dtb sa8155p-v2.dtb nubia_mp-data.dtb
+sa8155-adp-alcor-overlay.dtbo-base := sa8155.dtb sa8155-v2.dtb nubia_mp-data.dtb
+sa8155p-adp-alcor-overlay.dtbo-base := sa8155p.dtb sa8155p-v2.dtb nubia_mp-data.dtb
 else
 	dtbo-$(CONFIG_ARCH_SM8150) += \
 		sm8150-cdp-overlay.dtbo \
