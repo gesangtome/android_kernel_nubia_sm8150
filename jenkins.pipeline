@@ -1,0 +1,81 @@
+pipeline
+{
+    agent any
+
+    environment
+    {
+        LANG = 'en_US.UTF-8'
+    }
+
+    options
+    {
+        timeout(activity: true, time: 45)
+    }
+
+    stages
+    {
+        stage('update source')
+        { 
+            steps
+            {
+                script
+                {
+                    try
+                    {
+                        dir('/home/android/paranoid-10.0/kernel/nubia/sm8150')
+                        {
+                            sh label: '--- Processing --- ',
+                            script: 'rsync -av $WORKSPACE/ ./ --exclude={.git*,.*}'
+                        }
+                    }
+                    catch (e)
+                    {
+                        currentBuild.result = 'UNSTABLE'
+                        throw e
+                    }
+                }
+            }
+        }
+        stage('build kernel')
+        { 
+            steps
+            {
+                script
+                {
+                    try
+                    {
+                        dir('/home/android/paranoid-10.0')
+                        {
+                            sh label: '--- Processing --- ',
+                            script: 'bash make.sh kernel_image aospa_nx627j userdebug'
+                        }
+                    }
+                    catch (e)
+                    {
+                        currentBuild.result = 'FAILED'
+                        throw e
+                    }
+                }
+            }
+        } 
+    }
+    post
+    {
+        success
+        {
+            dir('/home/android/paranoid-10.0/out/target/product/nx627j')
+            {
+                archiveArtifacts artifacts: 'kernel',
+                onlyIfSuccessful: true
+            }
+        }
+        cleanup
+        {
+            dir('/home/android/paranoid-10.0/out/target/product')
+            {
+                sh label: '--- Processing --- ',
+                script: 'rm -rf nx627j'
+            }
+        }
+    }
+}
