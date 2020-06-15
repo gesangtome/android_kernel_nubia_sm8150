@@ -1,0 +1,66 @@
+pipeline
+{
+    agent any
+
+    environment { LANG = 'en_US.UTF-8' }
+
+    stages
+    {
+        stage('update source')
+        { 
+            steps
+            {
+                script
+                {
+                    try
+                    {
+                        dir('/home/android/lineage-17.1/kernel/nubia/sm8150')
+                        {
+                            sh label: '--- Processing --- ',
+                            script: 'rsync -a $WORKSPACE/ ./ --exclude={.git*,.*}'
+                        }
+                    }
+                    catch (e)
+                    {
+                        currentBuild.result = 'UNSTABLE'
+                        throw e
+                    }
+                }
+            }
+        }
+        stage('build kernel')
+        { 
+            steps
+            {
+                script
+                {
+                    try
+                    {
+                        dir('/home/android/lineage-17.1')
+                        {
+                            sh label: '--- Processing --- ',
+                            script: 'bash make.sh kernel_image lineage_nx627j eng'
+                        }
+                    }
+                    catch (e)
+                    {
+                        currentBuild.result = 'FAILED'
+                        throw e
+                    }
+                }
+            }
+        } 
+    }
+    post
+    {
+        success
+        {
+            dir('/home/android/lineage-17.1/out/target/product/nx627j')
+            {
+                archiveArtifacts artifacts: 'kernel',
+                fingerprint: true,
+                onlyIfSuccessful: true
+            }
+        }
+    }
+}
