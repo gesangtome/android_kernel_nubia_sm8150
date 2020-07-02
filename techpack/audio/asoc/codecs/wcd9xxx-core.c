@@ -660,11 +660,11 @@ static ssize_t wcd9xxx_slimslave_reg_show(char __user *ubuf, size_t count,
 		reg_val = wcd9xxx_interface_reg_read(debugCodec, i);
 		len = snprintf(tmp_buf, sizeof(tmp_buf),
 			"0x%.3x: 0x%.2x\n", i, reg_val);
-		if (len < 0) {
+		/*if (len < 0) {
 			pr_err("%s: fail to fill the buffer\n", __func__);
 			total = -EFAULT;
 			goto copy_err;
-		}
+		}*/
 
 		if ((total + len) >= count - 1)
 			break;
@@ -1232,15 +1232,19 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 	int ret = 0;
 	int intf_type;
 
-	if (!slim)
+	 if (!slim) {
 		return -EINVAL;
+		goto err;
+	}
 
 	intf_type = wcd9xxx_get_intf_type();
 
 	wcd9xxx = devm_kzalloc(&slim->dev, sizeof(struct wcd9xxx),
 				GFP_KERNEL);
-	if (!wcd9xxx)
+	if (!wcd9xxx) {
 		return -ENOMEM;
+		goto err;
+	}
 
 	if (intf_type == WCD9XXX_INTERFACE_TYPE_I2C) {
 		dev_dbg(&slim->dev, "%s:Codec is detected in I2C mode\n",
@@ -1601,7 +1605,7 @@ static const struct slim_device_id wcd_slim_device_id[] = {
 	{"tomtom-slim-pgd", WCD9330},
 	{"tasha-slim-pgd", WCD9335},
 	{"tavil-slim-pgd", WCD934X},
-	{"pahu-slim-pgd", WCD9360},
+	//{"pahu-slim-pgd", WCD9360},
 	{}
 };
 

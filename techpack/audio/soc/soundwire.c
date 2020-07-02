@@ -1007,8 +1007,8 @@ static int swr_device_match(struct device *dev, struct device_driver *driver)
 
 	if (dev->type == &swr_dev_type) {
 		swr_dev = to_swr_device(dev);
-		if (!swr_dev)
-			return -EINVAL;
+		//if (!swr_dev)
+			//return -EINVAL;
 	} else {
 		return 0;
 	}

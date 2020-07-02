@@ -605,31 +605,31 @@ static int msm_pcm_mmap(struct snd_pcm_substream *substream,
 
 static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 {
-	int rc = 0;
+	//int rc = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_audio *prtd = runtime->private_data;
-	struct asm_softvolume_params softvol = {
+	/*struct asm_softvolume_params softvol = {
 		.period = SOFT_VOLUME_PERIOD,
 		.step = SOFT_VOLUME_STEP,
 		.rampingcurve = SOFT_VOLUME_CURVE_LINEAR,
-	};
+	};*/
 
 	if (!prtd || !prtd->mmap_flag)
 		return -EIO;
 
-	if (prtd->audio_client) {
+	/*if (prtd->audio_client) {
 		rc = q6asm_set_softvolume_v2(prtd->audio_client,
 						&softvol, SOFT_VOLUME_INSTANCE_1);
 		if (rc < 0)
 			pr_err("%s: Send SoftVolume command failed rc=%d\n",
 					__func__, rc);
-	}
-	return rc;
+	}*/
+	return 0;
 }
 
 static int msm_pcm_close(struct snd_pcm_substream *substream)
 {
-	struct msm_plat_data *pdata = NULL;
+	//struct msm_plat_data *pdata = NULL;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
 	struct msm_audio *prtd = runtime->private_data;
@@ -638,7 +638,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 	int dir = 0;
 	int ret = 0;
 
-	if (!soc_prtd) {
+	/*if (!soc_prtd) {
 		pr_debug("%s private_data not found\n",
 			__func__);
 		return 0;
@@ -649,9 +649,9 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
         if (!pdata) {
                 pr_err("%s: pdata not found\n", __func__);
                return -ENODEV;
-        }
+        }*/
 
-	mutex_lock(&pdata->lock);
+	//mutex_lock(&pdata->lock);
 	if (ac) {
 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 			dir = IN;
@@ -686,7 +686,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 					 SNDRV_PCM_STREAM_CAPTURE);
 	kfree(prtd);
 	runtime->private_data = NULL;
-	mutex_unlock(&pdata->lock);
+	//mutex_unlock(&pdata->lock);
 
 	return 0;
 }
@@ -711,10 +711,10 @@ static int msm_pcm_volume_ctl_get(struct snd_kcontrol *kcontrol,
 		      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_pcm_volume *vol = snd_kcontrol_chip(kcontrol);
-	struct msm_plat_data *pdata = NULL;
+	//struct msm_plat_data *pdata = NULL;
 	struct snd_pcm_substream *substream =
 		vol->pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream;
-	struct snd_soc_pcm_runtime *soc_prtd = NULL;
+	//struct snd_soc_pcm_runtime *soc_prtd = NULL;
 	struct msm_audio *prtd;
 
 	pr_debug("%s\n", __func__);
@@ -722,24 +722,23 @@ static int msm_pcm_volume_ctl_get(struct snd_kcontrol *kcontrol,
 		pr_err("%s substream not found\n", __func__);
 		return -ENODEV;
 	}
-	soc_prtd = substream->private_data;
-	if (!substream->runtime || !soc_prtd) {
-		pr_debug("%s substream runtime or private_data not found\n",
-				 __func__);
+	//soc_prtd = substream->private_data;
+	if (!substream->runtime) {
+		pr_debug("%s substream runtime not found\n", __func__);
 		return 0;
 	}
 
-        pdata = (struct msm_plat_data *)
+        /*pdata = (struct msm_plat_data *)
 			dev_get_drvdata(soc_prtd->platform->dev);
         if (!pdata) {
                 pr_err("%s: pdata not found\n", __func__);
                return -ENODEV;
-        }
-	mutex_lock(&pdata->lock);
+        }*/
+	//mutex_lock(&pdata->lock);
 	prtd = substream->runtime->private_data;
 	if (prtd)
 		ucontrol->value.integer.value[0] = prtd->volume;
-	mutex_unlock(&pdata->lock);
+	//mutex_unlock(&pdata->lock);
 	return 0;
 }
 
@@ -748,10 +747,10 @@ static int msm_pcm_volume_ctl_put(struct snd_kcontrol *kcontrol,
 {
 	int rc = 0;
 	struct snd_pcm_volume *vol = snd_kcontrol_chip(kcontrol);
-	struct msm_plat_data *pdata = NULL;
+	//struct msm_plat_data *pdata = NULL;
 	struct snd_pcm_substream *substream =
 		vol->pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream;
-	struct snd_soc_pcm_runtime *soc_prtd = NULL;
+	//struct snd_soc_pcm_runtime *soc_prtd = NULL;
 	struct msm_audio *prtd;
 	int volume = ucontrol->value.integer.value[0];
 
@@ -760,26 +759,25 @@ static int msm_pcm_volume_ctl_put(struct snd_kcontrol *kcontrol,
 		pr_err("%s substream not found\n", __func__);
 		return -ENODEV;
 	}
-	soc_prtd = substream->private_data;
-	if (!substream->runtime || !soc_prtd) {
-		pr_err("%s substream runtime or private_data not found\n",
-				 __func__);
+	//soc_prtd = substream->private_data;
+	if (!substream->runtime) {
+		pr_err("%s substream runtime not found\n", __func__);
 		return 0;
 	}
 
-        pdata = (struct msm_plat_data *)
+        /*pdata = (struct msm_plat_data *)
 			dev_get_drvdata(soc_prtd->platform->dev);
         if (!pdata) {
                 pr_err("%s: pdata not found\n", __func__);
                return -ENODEV;
-        }
-	mutex_lock(&pdata->lock);
+        }*/
+	//mutex_lock(&pdata->lock);
 	prtd = substream->runtime->private_data;
 	if (prtd) {
 		rc = msm_pcm_set_volume(prtd, volume);
 		prtd->volume = volume;
 	}
-	mutex_unlock(&pdata->lock);
+	//mutex_unlock(&pdata->lock);
 	return rc;
 }
 

@@ -9843,10 +9843,10 @@ static const struct snd_kcontrol_new mmul2_mixer_controls[] = {
 	MSM_BACKEND_DAI_SLIMBUS_9_TX,
 	MSM_FRONTEND_DAI_MULTIMEDIA2, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
-	SOC_DOUBLE_EXT("SEC_AUX_PCM_TX", SND_SOC_NOPM,
+	/*SOC_DOUBLE_EXT("SEC_AUX_PCM_TX", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_SEC_AUXPCM_TX,
 	MSM_FRONTEND_DAI_MULTIMEDIA2, 1, 0, msm_routing_get_audio_mixer,
-	msm_routing_put_audio_mixer),
+	msm_routing_put_audio_mixer),*/
 };
 
 static const struct snd_kcontrol_new mmul3_mixer_controls[] = {
@@ -22732,6 +22732,7 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"SLIMBUS_0_RX Port Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"},
 	{"SLIMBUS_0_RX Port Mixer", "QUIN_MI2S_TX", "QUIN_MI2S_TX"},
 	{"SLIMBUS_0_RX Port Mixer", "INTERNAL_BT_SCO_TX", "INT_BT_SCO_TX"},
+	{"SLIMBUS_0_RX Port Mixer", "QUAT_MI2S_RX", "QUAT_MI2S_RX"},
 	{"SLIMBUS_0_RX", NULL, "SLIMBUS_0_RX Port Mixer"},
 	{"AFE_PCM_RX Port Mixer", "INTERNAL_FM_TX", "INT_FM_TX"},
 	{"AFE_PCM_RX Port Mixer", "SLIM_1_TX", "SLIMBUS_1_TX"},
@@ -23886,6 +23887,9 @@ static int msm_routing_probe(struct snd_soc_platform *platform)
 			   ARRAY_SIZE(msm_qdsp6_widgets));
 	snd_soc_dapm_add_routes(&platform->component.dapm, intercon,
 		ARRAY_SIZE(intercon));
+
+	printk("ignore BE_OUT");
+	snd_soc_dapm_ignore_suspend(&platform->component.dapm, "BE_OUT");
 
 	snd_soc_dapm_new_widgets(platform->component.dapm.card);
 

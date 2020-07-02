@@ -401,6 +401,7 @@ int msm_audio_ion_alloc(struct dma_buf **dma_buf, size_t bufsz,
 	rc = msm_audio_ion_map_buf(*dma_buf, paddr, plen, vaddr);
 	if (rc) {
 		pr_err("%s: failed to map ION buf, rc = %d\n", __func__, rc);
+		dma_buf_put(*dma_buf);
 		goto err;
 	}
 	pr_debug("%s: mapped address = %pK, size=%zd\n", __func__,
@@ -501,7 +502,7 @@ int msm_audio_ion_import(struct dma_buf **dma_buf, int fd,
 	rc = msm_audio_ion_map_buf(*dma_buf, paddr, plen, vaddr);
 	if (rc) {
 		pr_err("%s: failed to map ION buf, rc = %d\n", __func__, rc);
-		goto err;
+		goto err_ion_flag;
 	}
 	pr_debug("%s: mapped address = %pK, size=%zd\n", __func__,
 		*vaddr, bufsz);

@@ -129,13 +129,17 @@ void wcd_enable_curr_micbias(const struct wcd_mbhc *mbhc,
 	pr_debug("%s: enter, cs_mb_en: %d\n", __func__, cs_mb_en);
 
 	switch (cs_mb_en) {
+#if 0
 	case WCD_MBHC_EN_CS:
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MICB_CTRL, 0);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 3);
 		/* Program Button threshold registers as per CS */
 		wcd_program_btn_threshold(mbhc, false);
 		break;
+#endif
+	case WCD_MBHC_EN_CS:
 	case WCD_MBHC_EN_MB:
+	case WCD_MBHC_EN_PULLUP:
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 1);
 
@@ -144,6 +148,7 @@ void wcd_enable_curr_micbias(const struct wcd_mbhc *mbhc,
 		/* Program Button threshold registers as per MICBIAS */
 		wcd_program_btn_threshold(mbhc, true);
 		break;
+#if 0
 	case WCD_MBHC_EN_PULLUP:
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 3);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 1);
@@ -151,6 +156,7 @@ void wcd_enable_curr_micbias(const struct wcd_mbhc *mbhc,
 		/* Program Button threshold registers as per MICBIAS */
 		wcd_program_btn_threshold(mbhc, true);
 		break;
+#endif
 	case WCD_MBHC_EN_NONE:
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 1);
@@ -659,6 +665,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 						SND_JACK_LINEOUT |
 						SND_JACK_ANC_HEADPHONE |
 						SND_JACK_UNSUPPORTED);
+			mbhc->force_linein = false;
 		}
 
 		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET &&
@@ -717,6 +724,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 			}
 		}
 
+#if 0
 		/* Do not calculate impedance again for lineout
 		 * as during playback pa is on and impedance values
 		 * will not be correct resulting in lineout detected
@@ -735,6 +743,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 						WCD_MBHC_JACK_MASK);
 			}
 		}
+#endif
 
 		mbhc->hph_status |= jack_type;
 
@@ -1059,10 +1068,10 @@ static irqreturn_t wcd_mbhc_mech_plug_detect_irq(int irq, void *data)
 	struct wcd_mbhc *mbhc = data;
 
 	pr_debug("%s: enter\n", __func__);
-	if (mbhc == NULL) {
+	/*if (mbhc == NULL) {
 		pr_err("%s: NULL irq data\n", __func__);
 		return IRQ_NONE;
-	}
+	}*/
 	if (unlikely((mbhc->mbhc_cb->lock_sleep(mbhc, true)) == false)) {
 		pr_warn("%s: failed to hold suspend\n", __func__);
 		r = IRQ_NONE;
@@ -1411,8 +1420,13 @@ static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_INSREM_DBNC, 6);
 	}
 
+#ifdef CONFIG_ZTEMT_AUDIO
+	/* Button Debounce set to 32ms */
+	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_DBNC, 3);
+#else
 	/* Button Debounce set to 16ms */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_DBNC, 2);
+#endif
 
 	/* Enable micbias ramp */
 	if (mbhc->mbhc_cb->mbhc_micb_ramp_control)

@@ -218,7 +218,7 @@ struct msm_dai_q6_dai_data {
 	struct afe_dec_config dec_config;
 	union afe_port_config port_config;
 	u16 vi_feed_mono;
-	u32 xt_logging_disable;
+	//u32 xt_logging_disable;
 };
 
 struct msm_dai_q6_spdif_dai_data {
@@ -255,7 +255,7 @@ struct msm_dai_q6_cdc_dma_dai_data {
 	u32 channels;
 	u32 bitwidth;
 	u32 is_island_dai;
-	u32 xt_logging_disable;
+	//u32 xt_logging_disable;
 	union afe_port_config port_config;
 };
 
@@ -326,14 +326,14 @@ static const struct soc_enum sb_config_enum[] = {
 	SOC_ENUM_SINGLE_EXT(3, sb_format),
 };
 
-static const char * const xt_logging_disable_text[] = {
+/*static const char * const xt_logging_disable_text[] = {
 	"FALSE",
 	"TRUE",
 };
 
 static const struct soc_enum xt_logging_disable_enum[] = {
 	SOC_ENUM_SINGLE_EXT(2, xt_logging_disable_text),
-};
+};*/
 
 static const char *const tdm_data_format[] = {
 	"LPCM",
@@ -738,6 +738,10 @@ static int msm_dai_q6_dai_add_route(struct snd_soc_dai *dai)
 		dev_dbg(dai->dev, "%s: src %s sink %s\n",
 				__func__, intercon.source, intercon.sink);
 		snd_soc_dapm_add_routes(dapm, &intercon, 1);
+		if (!strcmp(dai->driver->playback.stream_name, "Quaternary MI2S Playback")) {
+			printk("ignore Quaternary MI2S Playback");
+			snd_soc_dapm_ignore_suspend(dapm, dai->driver->playback.stream_name);
+		}
 	}
 	if (dai->driver->capture.stream_name &&
 		dai->driver->capture.aif_name) {
@@ -2650,9 +2654,9 @@ static int msm_dai_q6_spk_digital_mute(struct snd_soc_dai *dai,
 				       int mute)
 {
 	int port_id = dai->id;
-	struct msm_dai_q6_dai_data *dai_data = dev_get_drvdata(dai->dev);
+	//struct msm_dai_q6_dai_data *dai_data = dev_get_drvdata(dai->dev);
 
-	if (mute && !dai_data->xt_logging_disable)
+	if (mute)
 		afe_get_sp_xt_logging_data(port_id);
 
 	return 0;
@@ -2699,7 +2703,7 @@ static int msm_dai_q6_cal_info_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int msm_dai_q6_cdc_dma_xt_logging_disable_put(
+/*static int msm_dai_q6_cdc_dma_xt_logging_disable_put(
 					struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
@@ -2748,7 +2752,7 @@ static int msm_dai_q6_sb_xt_logging_disable_get(struct snd_kcontrol *kcontrol,
 	if (dai_data)
 		ucontrol->value.integer.value[0] = dai_data->xt_logging_disable;
 	return 0;
-}
+}*/
 
 static int msm_dai_q6_sb_format_put(struct snd_kcontrol *kcontrol,
 				    struct snd_ctl_elem_value *ucontrol)
@@ -3489,9 +3493,9 @@ static const struct snd_kcontrol_new sb_config_controls[] = {
 	SOC_ENUM_EXT("SLIM_2_RX Format", sb_config_enum[0],
 		     msm_dai_q6_sb_format_get,
 		     msm_dai_q6_sb_format_put),
-	SOC_ENUM_EXT("SLIM_0_RX XTLoggingDisable", xt_logging_disable_enum[0],
+	/*SOC_ENUM_EXT("SLIM_0_RX XTLoggingDisable", xt_logging_disable_enum[0],
 		     msm_dai_q6_sb_xt_logging_disable_get,
-		     msm_dai_q6_sb_xt_logging_disable_put),
+		     msm_dai_q6_sb_xt_logging_disable_put),*/
 };
 
 static const struct snd_kcontrol_new rt_proxy_config_controls[] = {
@@ -3651,9 +3655,9 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&avd_drift_config_controls[0],
 					dai));
-		rc = snd_ctl_add(dai->component->card->snd_card,
+		/*rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(&sb_config_controls[3],
-				 dai_data));
+				 dai_data));*/
 		break;
 	case SLIMBUS_6_RX:
 		rc = snd_ctl_add(dai->component->card->snd_card,
@@ -10374,10 +10378,10 @@ static const struct snd_kcontrol_new cdc_dma_config_controls[] = {
 	SOC_ENUM_EXT("WSA_CDC_DMA_0 TX Format", cdc_dma_config_enum[0],
 		     msm_dai_q6_cdc_dma_format_get,
 		     msm_dai_q6_cdc_dma_format_put),
-	SOC_ENUM_EXT("WSA_CDC_DMA_0 RX XTLoggingDisable",
+	/*SOC_ENUM_EXT("WSA_CDC_DMA_0 RX XTLoggingDisable",
 		     xt_logging_disable_enum[0],
 		     msm_dai_q6_cdc_dma_xt_logging_disable_get,
-		     msm_dai_q6_cdc_dma_xt_logging_disable_put),
+		     msm_dai_q6_cdc_dma_xt_logging_disable_put),*/
 };
 
 /* SOC probe for codec DMA interface */
@@ -10404,11 +10408,11 @@ static int msm_dai_q6_dai_cdc_dma_probe(struct snd_soc_dai *dai)
 				 snd_ctl_new1(&cdc_dma_config_controls[0],
 				 dai_data));
 		break;
-	case AFE_PORT_ID_WSA_CODEC_DMA_RX_0:
+	/*case AFE_PORT_ID_WSA_CODEC_DMA_RX_0:
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(&cdc_dma_config_controls[1],
 				 dai_data));
-		break;
+		break;*/
 	default:
 		break;
 	}

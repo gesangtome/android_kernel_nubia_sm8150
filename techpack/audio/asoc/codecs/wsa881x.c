@@ -24,7 +24,7 @@
 #include <linux/kernel.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
-#include <linux/of_platform.h>
+//#include <linux/of_platform.h>
 #include <linux/regmap.h>
 #include <linux/debugfs.h>
 #include <soc/soundwire.h>
@@ -109,15 +109,16 @@ struct wsa881x_priv {
 	struct delayed_work ocp_ctl_work;
 	struct device_node *wsa_rst_np;
 	int pa_mute;
-	struct device_node *bolero_np;
+	/*struct device_node *bolero_np;
 	struct platform_device* bolero_dev;
 	struct notifier_block bolero_nblock;
 	void *handle;
 	int (*register_notifier)(void *handle,
 				 struct notifier_block *nblock,
-				 bool enable);
+				 bool enable);*/
 };
 
+#if 0
 /* from bolero to WSA events */
 enum {
 	BOLERO_WSA_EVT_TX_CH_HOLD_CLEAR = 1,
@@ -134,10 +135,11 @@ struct wsa_ctrl_platform_data {
 				 struct notifier_block *nblock,
 				 bool enable);
 };
+#endif
 
 #define SWR_SLV_MAX_REG_ADDR	0x390
 #define SWR_SLV_START_REG_ADDR	0x40
-#define SWR_SLV_MAX_BUF_LEN	25
+#define SWR_SLV_MAX_BUF_LEN	20
 #define BYTES_PER_LINE		12
 #define SWR_SLV_RD_BUF_LEN	8
 #define SWR_SLV_WR_BUF_LEN	32
@@ -417,11 +419,11 @@ static ssize_t wsa881x_swrslave_reg_show(char __user *ubuf, size_t count,
 			i, &reg_val, 1);
 		len = snprintf(tmp_buf, 25, "0x%.3x: 0x%.2x\n", i,
 			       (reg_val & 0xFF));
-		if (len < 0) {
+		/*if (len < 0) {
 			pr_err("%s: fail to fill the buffer\n", __func__);
 			total = -EFAULT;
 			goto copy_err;
-		}
+		}*/
 
 		if ((total + len) >= count - 1)
 			break;
@@ -999,10 +1001,10 @@ static int wsa881x_spkr_pa_event(struct snd_soc_dapm_widget *w,
 
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		if (!wsa881x->bolero_dev)
+		/*if (!wsa881x->bolero_dev)
 			snd_soc_update_bits(codec,
 					    WSA881X_SPKR_DRV_EN,
-					    0x80, 0x80);
+					    0x80, 0x80);*/
 		if (!wsa881x->comp_enable) {
 			max_gain = wsa881x->pa_gain;
 			/*
@@ -1034,7 +1036,7 @@ static int wsa881x_spkr_pa_event(struct snd_soc_dapm_widget *w,
 				      wsa881x->swr_slave->dev_num);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		snd_soc_update_bits(codec, WSA881X_SPKR_DRV_EN, 0x80, 0x00);
+		//snd_soc_update_bits(codec, WSA881X_SPKR_DRV_EN, 0x80, 0x00);
 		if (wsa881x->visense_enable) {
 			wsa881x_visense_adc_ctrl(codec, DISABLE);
 			wsa881x_visense_txfe_ctrl(codec, DISABLE,
@@ -1059,7 +1061,7 @@ static const struct snd_soc_dapm_widget wsa881x_dapm_widgets[] = {
 		wsa881x_rdac_event,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_PGA_E("SPKR PGA", SND_SOC_NOPM, 0, 0, NULL, 0,
+	SND_SOC_DAPM_PGA_E("SPKR PGA", WSA881X_SPKR_DRV_EN, 7, 0, NULL, 0,
 			wsa881x_spkr_pa_event, SND_SOC_DAPM_PRE_PMU |
 			SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 
@@ -1315,6 +1317,7 @@ static int wsa881x_gpio_init(struct swr_device *pdev)
 	return ret;
 }
 
+#if 0
 static int wsa881x_event_notify(struct notifier_block *nb,
 				unsigned long val, void *ptr)
 {
@@ -1346,6 +1349,7 @@ static int wsa881x_event_notify(struct notifier_block *nb,
 
 	return 0;
 }
+#endif
 
 static int wsa881x_swr_probe(struct swr_device *pdev)
 {
@@ -1353,7 +1357,7 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 	struct wsa881x_priv *wsa881x;
 	u8 devnum = 0;
 	bool pin_state_current = false;
-	struct wsa_ctrl_platform_data *plat_data = NULL;
+	//struct wsa_ctrl_platform_data *plat_data = NULL;
 
 	wsa881x = devm_kzalloc(&pdev->dev, sizeof(struct wsa881x_priv),
 			    GFP_KERNEL);
@@ -1446,7 +1450,7 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 		goto dev_err;
 	}
 
-	wsa881x->bolero_np = of_parse_phandle(pdev->dev.of_node,
+	/*wsa881x->bolero_np = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,bolero-handle", 0);
 	if (wsa881x->bolero_np) {
 		wsa881x->bolero_dev =
@@ -1474,7 +1478,7 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 		}
 	} else {
 		dev_info(&pdev->dev, "%s: bolero node not found\n", __func__);
-	}
+	}*/
 
 	mutex_init(&wsa881x->res_lock);
 	mutex_init(&wsa881x->temp_lock);
@@ -1499,9 +1503,9 @@ static int wsa881x_swr_remove(struct swr_device *pdev)
 		return -EINVAL;
 	}
 
-	if (wsa881x->register_notifier)
+	/*if (wsa881x->register_notifier)
 		wsa881x->register_notifier(wsa881x->handle,
-					   &wsa881x->bolero_nblock, false);
+					   &wsa881x->bolero_nblock, false);*/
 	debugfs_remove_recursive(debugfs_wsa881x_dent);
 	debugfs_wsa881x_dent = NULL;
 	mutex_destroy(&wsa881x->res_lock);

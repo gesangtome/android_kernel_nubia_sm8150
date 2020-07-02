@@ -144,7 +144,11 @@ do {                                                    \
 #define GND_MIC_SWAP_THRESHOLD 4
 #define GND_MIC_USBC_SWAP_THRESHOLD 2
 #define WCD_FAKE_REMOVAL_MIN_PERIOD_MS 100
+#ifdef CONFIG_ZTEMT_AUDIO
+#define HS_VREF_MIN_VAL 1300
+#else
 #define HS_VREF_MIN_VAL 1400
+#endif
 #define FW_READ_ATTEMPTS 15
 #define FW_READ_TIMEOUT 4000000
 #define FAKE_REM_RETRY_ATTEMPTS 3
