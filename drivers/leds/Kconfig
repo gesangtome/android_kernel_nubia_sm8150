@@ -690,6 +690,12 @@ config LEDS_QTI_TRI_LED
 	  at max and each is controlled by a PWM channel used for dimming
 	  or blinking.
 
+config ZTEMT_BREATH_LEDS
+       tristate "LED support for nubia Technologies, Inc."
+        depends on LEDS_QTI_TRI_LED
+        help
+          This macro just for nubia led feature.
+
 config LEDS_SYSCON
 	bool "LED support for LEDs on system controllers"
 	depends on LEDS_CLASS=y
@@ -745,5 +751,7 @@ config LEDS_QPNP_VIBRATOR_LDO
 
 comment "LED Triggers"
 source "drivers/leds/trigger/Kconfig"
+
+source "drivers/leds/nubia/Kconfig"
 
 endif # NEW_LEDS

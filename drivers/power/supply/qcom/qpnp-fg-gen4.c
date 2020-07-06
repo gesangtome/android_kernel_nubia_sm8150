@@ -264,6 +264,9 @@ struct fg_gen4_chip {
 	struct votable		*cp_disable_votable;
 	struct votable		*parallel_current_en_votable;
 	struct votable		*mem_attn_irq_en_votable;
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	struct votable		*soc_monitor_work_votable;
+#endif
 	struct work_struct	esr_calib_work;
 	struct work_struct	soc_scale_work;
 	struct alarm		esr_fast_cal_timer;
@@ -1610,6 +1613,9 @@ static int fg_gen4_get_batt_profile(struct fg_dev *fg)
 	struct device_node *batt_node, *profile_node;
 	const char *data;
 	int rc, len, i, tuple_len, avail_age_level = 0;
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	int temp = 0;
+#endif
 
 	batt_node = of_find_node_by_name(node, "qcom,battery-data");
 	if (!batt_node) {
@@ -1624,6 +1630,17 @@ static int fg_gen4_get_batt_profile(struct fg_dev *fg)
 	else
 		profile_node = of_batterydata_get_best_profile(batt_node,
 					fg->batt_id_ohms / 1000, NULL);
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	if (IS_ERR(profile_node) || !profile_node) {
+		rc = of_property_read_u32(node, "nubia,use-default-batt-id", &temp);
+		if (rc < 0)
+			pr_err("get use-default-batt-id error\n");
+
+		pr_err("couldn't find profile handle, use nubia default batt id =%d\n",temp);
+		profile_node = of_batterydata_get_best_profile(batt_node,
+				temp, NULL);
+	}
+#endif
 	if (IS_ERR(profile_node))
 		return PTR_ERR(profile_node);
 
@@ -2356,6 +2373,14 @@ done:
 	fg_notify_charger(fg);
 
 	schedule_delayed_work(&chip->ttf->ttf_work, msecs_to_jiffies(10000));
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	chip->soc_monitor_work_votable = find_votable("SOC_MONITOR");
+	if (chip->soc_monitor_work_votable == NULL) {
+		pr_err("NEO: can't find SOC_MONITOR votable\n");
+	} else {
+		vote(chip->soc_monitor_work_votable, "FG_PROFILE_VOTER", true, 0);
+	}
+#endif
 	fg_dbg(fg, FG_STATUS, "profile loaded successfully");
 out:
 	if (!chip->esr_fast_calib || is_debug_batt_id(fg)) {
@@ -4319,6 +4344,11 @@ static int fg_psy_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CALIBRATE:
 		pval->intval = chip->calib_level;
 		break;
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	case POWER_SUPPLY_PROP_VBATT_LOW:
+		pval->intval=chip->vbatt_low;
+		break;
+#endif
 	default:
 		pr_err("unsupported property %d\n", psp);
 		rc = -EINVAL;
@@ -4413,6 +4443,11 @@ static int fg_psy_set_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CALIBRATE:
 		rc = fg_gen4_set_calibrate_level(chip, pval->intval);
 		break;
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	case POWER_SUPPLY_PROP_VBATT_LOW:
+		chip->vbatt_low = 0;
+		break;
+#endif
 	default:
 		break;
 	}
@@ -4433,6 +4468,9 @@ static int fg_property_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CLEAR_SOH:
 	case POWER_SUPPLY_PROP_BATT_AGE_LEVEL:
 	case POWER_SUPPLY_PROP_CALIBRATE:
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	case POWER_SUPPLY_PROP_VBATT_LOW:	
+#endif
 		return 1;
 	default:
 		break;
@@ -4478,6 +4516,9 @@ static enum power_supply_property fg_psy_props[] = {
 	POWER_SUPPLY_PROP_POWER_AVG,
 	POWER_SUPPLY_PROP_SCALE_MODE_EN,
 	POWER_SUPPLY_PROP_CALIBRATE,
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	POWER_SUPPLY_PROP_VBATT_LOW,	
+#endif
 };
 
 static const struct power_supply_desc fg_psy_desc = {

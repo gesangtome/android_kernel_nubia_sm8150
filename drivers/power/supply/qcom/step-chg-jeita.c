@@ -717,7 +717,10 @@ static int handle_jeita(struct step_chg_info *chip)
 	}
 
 set_jeita_fv:
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+#else
 	vote(chip->fv_votable, JEITA_VOTER, fv_uv ? true : false, fv_uv);
+#endif
 
 update_time:
 	chip->jeita_last_update_time = ktime_get();

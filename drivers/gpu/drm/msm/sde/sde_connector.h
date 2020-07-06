@@ -908,4 +908,8 @@ int sde_connector_get_panel_vfp(struct drm_connector *connector,
  */
 int sde_connector_esd_status(struct drm_connector *connector);
 
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+int nubia_update_brightness(struct drm_connector *connector);
+#endif
+
 #endif /* _SDE_CONNECTOR_H_ */

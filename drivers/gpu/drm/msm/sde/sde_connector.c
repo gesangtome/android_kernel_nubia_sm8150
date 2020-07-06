@@ -64,6 +64,55 @@ static const struct drm_prop_enum_list e_qsync_mode[] = {
 	{SDE_RM_QSYNC_ONE_SHOT_MODE,	"one_shot"},
 };
 
+#ifdef NUBIA_BACKLIGHT_CURVE 
+int nubia_backlight_covert(struct dsi_display *display,
+                                      int value)
+{
+	u32 bl_lvl;
+
+	if(!display)
+		return -EINVAL;
+
+	pr_debug("before nubia backlight, value = %d\n",value);
+	if (display->panel->bl_config.backlight_curve[0] == 0 && value<256 && value>=0 \
+           && display->panel->bl_config.brightness_max_level < 256) {
+           bl_lvl = display->panel->bl_config.backlight_curve[value];
+    } else {
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	if (display->panel->id == 0) {
+		if (value > 0) {
+			bl_lvl =value * (display->panel->bl_config.bl_max_level -display->panel->bl_config.bl_min_level);
+			do_div(bl_lvl,display->panel->bl_config.brightness_max_level);
+			bl_lvl =value *bl_lvl;
+			do_div(bl_lvl,display->panel->bl_config.brightness_max_level);
+			bl_lvl += display->panel->bl_config.bl_min_level;
+		} else {
+			bl_lvl =0;
+		}
+	} else if(display->panel->id == 1) {
+		if (value == 336) {
+			bl_lvl =value * (display->panel->bl_config.bl_max_level -display->panel->bl_config.bl_min_level);
+			do_div(bl_lvl,display->panel->bl_config.brightness_max_level);
+			bl_lvl =value *bl_lvl;
+			do_div(bl_lvl,display->panel->bl_config.brightness_max_level);
+			bl_lvl -= display->panel->bl_config.bl_min_level;
+		} else if (value > 336) {
+			bl_lvl =value * (display->panel->bl_config.bl_max_level -display->panel->bl_config.bl_min_level);
+			do_div(bl_lvl,display->panel->bl_config.brightness_max_level);
+			bl_lvl =value *bl_lvl;
+			do_div(bl_lvl,display->panel->bl_config.brightness_max_level);
+			bl_lvl += display->panel->bl_config.bl_min_level;
+		} else {
+			bl_lvl =0;
+		}
+	}
+#endif
+	}
+	pr_debug("after nubia backlight, bl_lvl = %d\n",bl_lvl);
+	return bl_lvl;
+}
+#endif
+
 static int sde_backlight_device_update_status(struct backlight_device *bd)
 {
 	int brightness;
@@ -82,12 +131,21 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 
 	c_conn = bl_get_data(bd);
 	display = (struct dsi_display *) c_conn->display;
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	if (brightness > display->panel->bl_config.brightness_max_level)
+		brightness = display->panel->bl_config.brightness_max_level;
+#else
 	if (brightness > display->panel->bl_config.bl_max_level)
 		brightness = display->panel->bl_config.bl_max_level;
+#endif
 
+#ifdef NUBIA_BACKLIGHT_CURVE
+	bl_lvl = nubia_backlight_covert(display,brightness);
+#else
 	/* map UI brightness into driver backlight level with rounding */
 	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
 			display->panel->bl_config.brightness_max_level);
+#endif
 
 	if (!bl_lvl && brightness)
 		bl_lvl = 1;
@@ -110,6 +168,24 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 
 	return rc;
 }
+
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+int nubia_update_brightness(struct drm_connector *connector)
+{
+	struct sde_connector *c_conn;
+	struct backlight_device *bd;
+	int rc = 0;
+
+	if (!connector)
+		return -EINVAL;
+
+	c_conn = to_sde_connector(connector);;
+	bd= c_conn->bl_device;
+	rc = sde_backlight_device_update_status(bd);
+
+	return rc;
+}
+#endif
 
 static int sde_backlight_device_get_brightness(struct backlight_device *bd)
 {
@@ -1834,10 +1910,19 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 	return 0;
 }
 
+/*
+ * When used front panel,if happend panel_dead , it will lead to back tp error resume
+ * So this flag recording panel dead state, then to talk tp don`t to resume when panel_dead reset
+*/
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+extern int panelDeadState;
+#endif
+
 static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 	bool skip_pre_kickoff)
 {
 	struct drm_event event;
+	struct dsi_display *display;
 
 	if (!conn)
 		return;
@@ -1850,16 +1935,21 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 	if (conn->panel_dead)
 		return;
 
+	display = conn->display;
 	conn->panel_dead = true;
 	event.type = DRM_EVENT_PANEL_DEAD;
 	event.length = sizeof(bool);
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	panelDeadState = 1;
+#endif
+
 	msm_mode_object_event_notify(&conn->base.base,
 		conn->base.dev, &event, (u8 *)&conn->panel_dead);
 	sde_encoder_display_failure_notification(conn->encoder,
 		skip_pre_kickoff);
 	SDE_EVT32(SDE_EVTLOG_ERROR);
-	SDE_ERROR("esd check failed report PANEL_DEAD conn_id: %d enc_id: %d\n",
-			conn->base.base.id, conn->encoder->base.id);
+	SDE_ERROR("[%s]esd check failed report PANEL_DEAD conn_id: %d enc_id: %d\n",
+		display->name, conn->base.base.id, conn->encoder->base.id);
 }
 
 int sde_connector_esd_status(struct drm_connector *conn)

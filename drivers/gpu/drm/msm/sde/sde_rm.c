@@ -1402,8 +1402,14 @@ int sde_rm_cont_splash_res_init(struct msm_drm_private *priv,
 				break;
 		}
 	}
+	SDE_DEBUG("active displays vs actually enabled :%d/%d",
+			splash_data->num_splash_displays, index);
 
-	if (index != splash_data->num_splash_displays) {
+	if (index != splash_data->num_splash_displays
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+			&& (index == 0 || index > splash_data->num_splash_displays)
+#endif
+		) {
 		SDE_DEBUG("mismatch active displays vs actually enabled :%d/%d",
 				splash_data->num_splash_displays, index);
 		return -EINVAL;

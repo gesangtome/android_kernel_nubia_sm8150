@@ -2248,6 +2248,10 @@ static int _regulator_do_disable(struct regulator_dev *rdev)
 	int ret;
 
 	trace_regulator_disable(rdev_get_name(rdev));
+	if (strcmp(rdev->desc->name, "display_panel_avdd_eldo") == 0) {
+		printk("%s: ========= \n", __func__);
+		return 0;
+	}
 
 	if (rdev->ena_pin) {
 		if (rdev->ena_gpio_state) {

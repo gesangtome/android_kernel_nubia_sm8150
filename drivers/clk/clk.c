@@ -2687,7 +2687,11 @@ EXPORT_SYMBOL_GPL(clk_set_flags);
 
 static struct dentry *rootdir;
 static int inited = 0;
+#ifdef CONFIG_ZTEMT_POWER_DEBUG
+static u32 debug_suspend = 1;
+#else
 static u32 debug_suspend;
+#endif
 static DEFINE_MUTEX(clk_debug_lock);
 static HLIST_HEAD(clk_debug_list);
 

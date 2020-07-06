@@ -1,0 +1,26 @@
+config NUBIA_SENSORS_FRONT_RGB_BH1745
+	tristate "nubia front rgb bh1745 sensor device"
+	default n
+	help
+	  If you have a nubia front rgb bh1745 sensor device connected
+	  your system, say Y here.
+
+	  If unsure, say N here.
+
+config NUBIA_SENSORS_BACK_TMD2725
+	tristate "nubia back light/prox tmd2725 sensor device"
+	default n
+	help
+	  If you have a nubia back light/prox tmd2725 sensor device connected
+	  your system, say Y here.
+
+	  If unsure, say N here.
+
+config NUBIA_SENSORS_FRONT_PS_STK3332
+	tristate "nubia front proximity stk3332 sensor device"
+	default n
+	help
+	  If you have a nubia front proximity stk3332 sensor device connected
+	  your system, say Y here.
+
+	  If unsure, say N here.

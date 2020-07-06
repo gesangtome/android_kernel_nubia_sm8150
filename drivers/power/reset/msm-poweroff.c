@@ -133,6 +133,24 @@ int scm_set_dload_mode(int arg1, int arg2)
 				&desc);
 }
 
+#ifdef CONFIG_NUBIA_RESTART_BOOTMODE
+static void scm_disable_sdi(void)
+{
+	int ret;
+	struct scm_desc desc = {
+		.args[0] = 1,
+		.args[1] = 0,
+		.arginfo = SCM_ARGS(2),
+	};
+
+		ret = scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_BOOT,
+			  SCM_WDOG_DEBUG_BOOT_PART), &desc);
+
+	if (ret)
+		pr_err("Failed to disable secure wdog debug: %d\n", ret);
+}
+#endif
+
 static void set_dload_mode(int on)
 {
 	int ret;
@@ -148,6 +166,10 @@ static void set_dload_mode(int on)
 	ret = scm_set_dload_mode(on ? dload_type : 0, 0);
 	if (ret)
 		pr_err("Failed to set secure DLOAD mode: %d\n", ret);
+#ifdef CONFIG_NUBIA_RESTART_BOOTMODE
+	if (!on)
+		scm_disable_sdi();
+#endif
 
 	dload_mode_enabled = on;
 }
@@ -230,6 +252,8 @@ static bool get_dload_mode(void)
 }
 #endif
 
+#ifdef CONFIG_NUBIA_RESTART_BOOTMODE
+#else
 static void scm_disable_sdi(void)
 {
 	int ret;
@@ -245,12 +269,21 @@ static void scm_disable_sdi(void)
 	if (ret)
 		pr_err("Failed to disable secure wdog debug: %d\n", ret);
 }
+#endif
 
 void msm_set_restart_mode(int mode)
 {
 	restart_mode = mode;
 }
 EXPORT_SYMBOL(msm_set_restart_mode);
+
+#ifdef CONFIG_NUBIA_INPUT_KEYRESET
+void msm_set_dload_mode(int mode)
+{
+	download_mode = mode;
+}
+EXPORT_SYMBOL(msm_set_dload_mode);
+#endif
 
 /*
  * Force the SPMI PMIC arbiter to shutdown so that no more SPMI transactions
@@ -285,19 +318,41 @@ static void msm_restart_prepare(const char *cmd)
 			(in_panic || restart_mode == RESTART_DLOAD));
 #endif
 
+#ifdef CONFIG_NUBIA_PANIC_BOOTMODE
+	printk(KERN_EMERG "nubia: %s:%d: download_mode=%x,in_panic=%x,restart_mode=%x\n",
+		__func__,__LINE__,download_mode,in_panic,restart_mode);
+#endif
+
 	if (qpnp_pon_check_hard_reset_stored()) {
+#ifdef CONFIG_NUBIA_PANIC_BOOTMODE
+		printk(KERN_EMERG "nubia: %s:%d: qpnp_pon_check_hard_reset_stored()\n",__func__,__LINE__);
+		if (get_dload_mode() ||
+			((cmd != NULL && cmd[0] != '\0') &&
+			!strcmp(cmd, "edl")) || in_panic)
+#else
 		/* Set warm reset as true when device is in dload mode */
 		if (get_dload_mode() ||
 			((cmd != NULL && cmd[0] != '\0') &&
 			!strcmp(cmd, "edl")))
+#endif
 			need_warm_reset = true;
 	} else {
+#ifdef CONFIG_NUBIA_PANIC_BOOTMODE
 		need_warm_reset = (get_dload_mode() ||
 				(cmd != NULL && cmd[0] != '\0'));
+#else
+		need_warm_reset = (get_dload_mode() ||
+				(cmd != NULL && cmd[0] != '\0') || in_panic);
+#endif
 	}
 
 	if (force_warm_reboot)
 		pr_info("Forcing a warm reset of the system\n");
+
+#ifdef CONFIG_NUBIA_PANIC_BOOTMODE
+	printk(KERN_EMERG "nubia: %s:%d: need_warm_reset=%s dload_mode: %s\n",
+		__func__,__LINE__,need_warm_reset==true?"true":"false", get_dload_mode()?"true":"false");
+#endif
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
 	if (force_warm_reboot || need_warm_reset)
@@ -344,6 +399,15 @@ static void msm_restart_prepare(const char *cmd)
 			__raw_writel(0x77665501, restart_reason);
 		}
 	}
+
+#ifdef CONFIG_NUBIA_PANIC_BOOTMODE
+	if (in_panic) {
+		printk(KERN_EMERG "set panic reboot reason=%x,download_mode=%x,need_warm_reset=%x\n",
+			PON_RESTART_REASON_PANIC,download_mode,need_warm_reset);
+
+		qpnp_pon_set_restart_reason(PON_RESTART_REASON_PANIC);
+	}
+#endif
 
 	flush_cache_all();
 
@@ -662,9 +726,11 @@ skip_sysfs_create:
 		scm_deassert_ps_hold_supported = true;
 
 	set_dload_mode(download_mode);
+#ifdef CONFIG_NUBIA_RESTART_BOOTMODE
+#else
 	if (!download_mode)
 		scm_disable_sdi();
-
+#endif
 	force_warm_reboot = of_property_read_bool(dev->of_node,
 						"qcom,force-warm-reboot");
 

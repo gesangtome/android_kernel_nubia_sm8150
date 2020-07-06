@@ -1062,9 +1062,13 @@ void drm_wait_one_vblank(struct drm_device *dev, unsigned int pipe)
 	ret = wait_event_timeout(vblank->queue,
 				 last != drm_vblank_count(dev, pipe),
 				 msecs_to_jiffies(100));
-
-	WARN(ret == 0, "vblank wait timed out on crtc %i\n", pipe);
-
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	if (dev->aod_mode == 23) {
+#endif
+		WARN(ret == 0, "vblank wait timed out on crtc %i\n", pipe);
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	}
+#endif
 	drm_vblank_put(dev, pipe);
 }
 EXPORT_SYMBOL(drm_wait_one_vblank);

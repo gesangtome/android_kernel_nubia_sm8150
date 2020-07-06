@@ -20,6 +20,8 @@
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
 
+extern int32_t cam_nubia_eeprom_io_init(struct camera_io_master io_master);
+
 /**
  * cam_eeprom_read_memory() - read map data into buffer
  * @e_ctrl:     eeprom control struct
@@ -117,6 +119,9 @@ static int cam_eeprom_read_memory(struct cam_eeprom_ctrl_t *e_ctrl,
 				CAM_ERR(CAM_EEPROM, "read failed rc %d",
 					rc);
 				return rc;
+			}
+			if (e_ctrl->io_master_info.cci_client->sid == 0x50) {
+				cam_nubia_eeprom_io_init(e_ctrl->io_master_info);
 			}
 			memptr += emap[j].mem.valid_size;
 		}

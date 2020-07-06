@@ -288,6 +288,10 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(precharge_current),
 	POWER_SUPPLY_ATTR(charge_term_current),
 	POWER_SUPPLY_ATTR(calibrate),
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	POWER_SUPPLY_ATTR(usb_ov),
+	POWER_SUPPLY_ATTR(vbatt_low),
+#endif
 	/* Local extensions */
 	POWER_SUPPLY_ATTR(usb_hc),
 	POWER_SUPPLY_ATTR(usb_otg),
@@ -430,6 +434,9 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(serial_number),
 	POWER_SUPPLY_ATTR(battery_type),
 	POWER_SUPPLY_ATTR(cycle_counts),
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	POWER_SUPPLY_ATTR(lcd_on),
+#endif
 };
 
 static struct attribute *

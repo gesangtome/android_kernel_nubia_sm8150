@@ -119,8 +119,10 @@ static int fsa4480_usbc_event_changed(struct notifier_block *nb,
 	switch (mode.intval) {
 	case POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER:
 	case POWER_SUPPLY_TYPEC_NONE:
+#if 0
 		if (atomic_read(&(fsa_priv->usbc_mode)) == mode.intval)
 			break; /* filter notifications received before */
+#endif
 		atomic_set(&(fsa_priv->usbc_mode), mode.intval);
 
 		dev_dbg(dev, "%s: queueing usbc_analog_work\n",

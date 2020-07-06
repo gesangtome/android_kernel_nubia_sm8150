@@ -33,6 +33,14 @@
 #include <linux/regulator/machine.h>
 #include <linux/regulator/of_regulator.h>
 
+#ifdef CONFIG_NUBIA_DOUBLE_PWRKEY
+#include <linux/gpio.h>
+#define LEFTPWR_GPIO			142
+#define RIGHTPWR_GPIO		    113
+#define LEFTPWR_BIT			2
+#define RIGHTPWR_BIT			1
+#endif
+
 #define PMIC_VER_8941				0x01
 #define PMIC_VERSION_REG			0x0105
 #define PMIC_VERSION_REV4_REG			0x0103
@@ -916,6 +924,11 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	uint pon_rt_sts;
 	u64 elapsed_us;
 	int rc;
+#ifdef CONFIG_NUBIA_DOUBLE_PWRKEY
+	static uint gpio_old_state = 3; /* The default level of the 2 GPIO is 1 */
+	uint gpio_new_state = 0;
+	uint pwrkey_state = 0;
+#endif
 
 	cfg = qpnp_get_cfg(pon, pon_type);
 	if (!cfg)
@@ -958,12 +971,31 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 
 	pr_debug("PMIC input: code=%d, status=0x%02X\n", cfg->key_code,
 		pon_rt_sts);
+#ifdef CONFIG_NUBIA_DOUBLE_PWRKEY
+	if (cfg->key_code == KEY_POWER) {
+		pr_err("PMIC left:%d right:%d\n",gpio_get_value(LEFTPWR_GPIO),gpio_get_value(RIGHTPWR_GPIO));
+		gpio_new_state = (gpio_get_value(LEFTPWR_GPIO) << 1) | gpio_get_value(RIGHTPWR_GPIO);
+		pwrkey_state = gpio_new_state ^ gpio_old_state;
+		gpio_old_state = gpio_new_state;
+	}
+#endif
 	key_status = pon_rt_sts & pon_rt_bit;
 
 	if (pon->kpdpwr_dbc_enable && cfg->pon_type == PON_KPDPWR) {
 		if (!key_status)
 			pon->kpdpwr_last_release_time = ktime_get();
 	}
+#ifdef CONFIG_NUBIA_DOUBLE_PWRKEY
+	if (pwrkey_state != 0) {
+		if (pwrkey_state & LEFTPWR_BIT) {
+			input_report_key(pon->pon_input, KEY_LEFTPWR, key_status);
+		}
+
+		if (pwrkey_state & RIGHTPWR_BIT) {
+			input_report_key(pon->pon_input, KEY_RIGHTPWR, key_status);
+		}
+	}
+#endif
 
 	/*
 	 * Simulate a press event in case release event occurred without a press
@@ -1359,6 +1391,10 @@ qpnp_pon_config_input(struct qpnp_pon *pon, struct qpnp_pon_config *cfg)
 	}
 
 	input_set_capability(pon->pon_input, EV_KEY, cfg->key_code);
+#ifdef CONFIG_NUBIA_DOUBLE_PWRKEY
+	input_set_capability(pon->pon_input, EV_KEY, KEY_LEFTPWR);
+	input_set_capability(pon->pon_input, EV_KEY, KEY_RIGHTPWR);
+#endif
 
 	return 0;
 }

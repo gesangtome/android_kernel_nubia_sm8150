@@ -7,7 +7,7 @@ menuconfig INPUT_TOUCHSCREEN
 	  Say Y here, and a list of supported touchscreens will be displayed.
 	  This option doesn't affect the kernel.
 
-	  If unsure, say Y.
+	  If unsure, say N.
 
 if INPUT_TOUCHSCREEN
 
@@ -1287,5 +1287,17 @@ config TOUCHSCREEN_SYNAPTICS_TCM
 	  If unsure, say N.
 
 source "drivers/input/touchscreen/synaptics_tcm/Kconfig"
+
+config TOUCHSCREEN_NUBIA_BACK_GOODIX
+        bool "NUBIA GOODIX BACK DEVICE"
+        default n
+
+source "drivers/input/touchscreen/goodix_gtx8_back/Kconfig"
+
+config TOUCHSCREEN_NUBIA_FRONT_GOODIX
+        bool "NUBIA GOODIX FRONT DEVICE"
+        default n
+
+source "drivers/input/touchscreen/goodix_gtx8_front/Kconfig"
 
 endif

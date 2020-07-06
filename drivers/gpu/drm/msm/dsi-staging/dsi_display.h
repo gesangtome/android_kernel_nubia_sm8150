@@ -711,5 +711,8 @@ int dsi_display_cont_splash_config(void *display);
  */
 int dsi_display_get_panel_vfp(void *display,
 	int h_active, int v_active);
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+int nubia_dsi_display_aod(struct dsi_display *display, uint32_t state);
+#endif
 
 #endif /* _DSI_DISPLAY_H_ */

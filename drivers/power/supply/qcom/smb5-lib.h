@@ -86,6 +86,12 @@ enum print_reason {
 #define MAIN_FCC_VOTER			"MAIN_FCC_VOTER"
 #define DCIN_AICL_VOTER			"DCIN_AICL_VOTER"
 #define OVERHEAT_LIMIT_VOTER		"OVERHEAT_LIMIT_VOTER"
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+#define USER_STEP_CHG			"USER_STEP_CHG"
+#define USER_JEITA_FV_CHG		"USER_JEITA_FV_CHG"
+#define USER_ADAPTER_CHG			"USER_ADAPTER_CHG"
+#define USER_LCD_CHG			"USER_LCD_CHG"
+#endif
 
 #define BOOST_BACK_STORM_COUNT	3
 #define WEAK_CHG_STORM_COUNT	8
@@ -572,6 +578,22 @@ struct smb_charger {
 	bool			dpdm_enabled;
 	bool			apsd_ext_timeout;
 	bool			qc3p5_detected;
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+	bool			step_chg_base_soc;
+	int			step_chg_base_soc_value;
+	int			step_chg_base_soc_current;
+	struct delayed_work	step_charge_check_work;
+	bool			step_chg_vote_flag;
+	int			jeita_warm_stop_chg_soc;
+	
+	bool			lcd_on_limit_enable;
+	int			lcd_on_limit_temp;
+	int			lcd_on_limit_fcc;
+	int			lcd_on;
+#if defined(CONFIG_FB)
+	struct notifier_block 	fb_notifier;
+#endif
+#endif
 
 	/* workaround flag */
 	u32			wa_flags;
@@ -713,6 +735,10 @@ int smblib_get_prop_voltage_wls_output(struct smb_charger *chg,
 				union power_supply_propval *val);
 int smblib_set_prop_voltage_wls_output(struct smb_charger *chg,
 				const union power_supply_propval *val);
+#if defined(CONFIG_NUBIA_CHARGE_FEATURE)
+int smblib_get_prop_usb_ov(struct smb_charger *chg,
+				union power_supply_propval *val);
+#endif
 int smblib_set_prop_dc_reset(struct smb_charger *chg);
 int smblib_get_prop_usb_present(struct smb_charger *chg,
 				union power_supply_propval *val);
@@ -812,7 +838,6 @@ int smblib_force_vbus_voltage(struct smb_charger *chg, u8 val);
 int smblib_get_irq_status(struct smb_charger *chg,
 				union power_supply_propval *val);
 int smblib_get_qc3_main_icl_offset(struct smb_charger *chg, int *offset_ua);
-
 int smblib_init(struct smb_charger *chg);
 int smblib_deinit(struct smb_charger *chg);
 #endif /* __SMB5_CHARGER_H */

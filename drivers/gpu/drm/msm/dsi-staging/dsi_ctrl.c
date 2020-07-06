@@ -1436,6 +1436,8 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 	u32 dlen, diff, rlen;
 	unsigned char *buff;
 	char cmd;
+	u32 read_time = 0;
+	int retries = 0;
 
 	if (!msg) {
 		pr_err("Invalid msg\n");
@@ -1471,6 +1473,7 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 		/* clear RDBK_DATA registers before proceeding */
 		dsi_ctrl->hw.ops.clear_rdbk_register(&dsi_ctrl->hw);
 
+retry:
 		rc = dsi_message_tx(dsi_ctrl, msg, flags);
 		if (rc) {
 			pr_err("Message transmission failed, rc=%d\n", rc);
@@ -1484,10 +1487,23 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 			usleep_range(msg->wait_ms * 1000,
 				     ((msg->wait_ms * 1000) + 10));
 
-		dlen = dsi_ctrl->hw.ops.get_cmd_read_data(&dsi_ctrl->hw,
-					buff, total_bytes_read,
-					total_read_len, rd_pkt_size,
-					&hw_read_cnt);
+		do {
+			dlen = dsi_ctrl->hw.ops.get_cmd_read_data(&dsi_ctrl->hw,
+						buff, total_bytes_read,
+						total_read_len, rd_pkt_size,
+						&hw_read_cnt);
+			if (!dlen) {
+				pr_err("reading rdbk_data failed, and retry! read_time = %d", read_time);
+				read_time ++;
+				usleep_range(10000, 10000);
+			}
+		} while (!dlen && read_time < 3);
+
+		if (!dlen && (retries < 3)) {
+				pr_err("read_data failed, goto retry! retries = %d", retries);
+				retries ++;
+				goto retry;
+			}
 		if (!dlen)
 			goto error;
 

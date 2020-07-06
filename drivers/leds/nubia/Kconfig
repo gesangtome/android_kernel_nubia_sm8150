@@ -1,0 +1,44 @@
+menuconfig NUBIA_LED
+	bool "nubia led driver"
+	depends on LEDS_CLASS
+	help
+	  This option enables support for the nubia leds class.
+
+	  If unsure, say Y.
+
+if NUBIA_LED
+
+config NUBIA_LED_AW22XX
+	bool "nubia led aw22xxx driver"
+	default n
+	help
+	  Say Y here if you have a nubia led aw22xxx connected to your system.
+
+	  If unsure, say N.
+
+config NUBIA_LED_AW8695
+	bool "Haptic driver for awinic AW8695 series"
+	depends on I2C
+	default n
+	help
+	  This option enables support for AW8695 series Haptic Driver.
+
+	  If unsure, say N.
+
+config NUBIA_LED0_AW9106
+	bool "nubia led0 aw9106 driver"
+	default n
+	help
+	  Say Y here if you have a nubia led aw9106 connected to your system.
+
+	  If unsure, say N.
+
+config NUBIA_LED1_AW9106
+	bool "nubia led1 aw9106 driver"
+	default n
+	help
+	  Say Y here if you have a nubia led aw9106 connected to your system.
+
+	  If unsure, say N.
+
+endif # NUBIA_LED

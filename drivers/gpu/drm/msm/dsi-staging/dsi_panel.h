@@ -36,6 +36,22 @@
 #define DSI_CMD_PPS_SIZE 135
 
 #define DSI_MODE_MAX 5
+#define NUBIA_BACKLIGHT_CURVE 1
+
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+#define DSI0_NORMAL_STATE	BIT(0)
+#define DSI0_AOD_STATE		BIT(1)
+#define DSI1_NORMAL_STATE	BIT(2)
+#define DSI1_AOD_STATE		BIT(3)
+#endif
+
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+enum dsi_panel_id {
+	DSI_PRIMARY_PANEL = 0,
+	DSI_SECONDARY_PANEL,
+	DSI_PANEL_MAX
+};
+#endif
 
 enum dsi_panel_rotation {
 	DSI_PANEL_ROTATE_NONE = 0,
@@ -118,7 +134,9 @@ struct dsi_backlight_config {
 	u32 bl_level;
 	u32 bl_scale;
 	u32 bl_scale_ad;
-
+#ifdef NUBIA_BACKLIGHT_CURVE
+	uint32_t backlight_curve[256];
+#endif
 	int en_gpio;
 	/* PWM params */
 	struct pwm_device *pwm_bl;
@@ -142,6 +160,13 @@ struct dsi_panel_reset_config {
 	int reset_gpio;
 	int disp_en_gpio;
 	int lcd_mode_sel_gpio;
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	int back_vddi_1p8_gpio;
+	int back_panel_vci_3p3_gpio;
+	int front_panel_vci_3p3_gpio;
+	int front_panel_f_fd_gpio;
+	int back_panel_f_fd_gpio;
+#endif
 	u32 mode_sel_state;
 };
 
@@ -168,6 +193,10 @@ struct drm_panel_esd_config {
 };
 
 struct dsi_panel {
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+	enum dsi_panel_id id;
+	u16 state;
+#endif
 	const char *name;
 	const char *type;
 	struct device_node *panel_of_node;
@@ -336,5 +365,21 @@ struct dsi_panel *dsi_panel_ext_bridge_get(struct device *parent,
 int dsi_panel_parse_esd_reg_read_configs(struct dsi_panel *panel);
 
 void dsi_panel_ext_bridge_put(struct dsi_panel *panel);
+
+#ifdef CONFIG_NUBIA_LCD_DISP_PREFERENCE
+int nubia_dsi_panel_cabc(struct dsi_panel *panel, uint32_t cabc_modes);
+#endif
+
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+int nubia_dsi_panel_aod(struct dsi_panel *panel, uint32_t state);
+int nubia_set_aod_brightness(struct dsi_panel *panel, uint32_t brightness);
+int nubia_dsi_panel_hbm(struct dsi_panel *panel, uint32_t state);
+int nubia_dsi_panel_srgb(struct dsi_panel *panel, uint32_t state);
+#endif
+
+#ifdef CONFIG_NUBIA_DEBUG_LCD_REG
+int dsi_panel_read_data(struct mipi_dsi_device *dsi, u8 cmd, void* buf, size_t len);
+int dsi_panel_write_data(struct mipi_dsi_device *dsi, u8 cmd, void* buf, size_t len);
+#endif
 
 #endif /* _DSI_PANEL_H_ */

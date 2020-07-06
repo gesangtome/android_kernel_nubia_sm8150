@@ -12,6 +12,13 @@ menuconfig INPUT_KEYBOARD
 
 if INPUT_KEYBOARD
 
+config NUBIA_KEYBOARD_GAMESWITCH
+        tristate "Keypad NUBIA GameSwitchkey"
+        depends on KEYBOARD_GPIO
+        default n
+        help
+          Addr GameSwitchkey attr
+
 config KEYBOARD_ADC
 	tristate "ADC Ladder Buttons"
 	depends on IIO
@@ -755,5 +762,7 @@ config KEYBOARD_BCM
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called bcm-keypad.
+
+source "drivers/input/keyboard/touchkey/Kconfig"
 
 endif

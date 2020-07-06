@@ -198,3 +198,21 @@ config DRM_SDE_RSC
 	  avoids the display core power collapse. A client can also register
 	  for display core power collapse events on rsc.
 
+config NUBIA_LCD_DISP_PREFERENCE
+	bool "NUBIA LCD DISP PREFERENCE"
+	default n
+	help
+	  nubia lcd disp preference includes color enhancement and temperature.
+
+config NUBIA_SWITCH_LCD
+	bool "NUBIA SWITCH LCD"
+	default n
+	help
+	  nubia switch lcd.
+
+config NUBIA_DEBUG_LCD_REG
+	bool "NUBIA DEBUG LCD REGION"
+	default n
+	help
+	  nubia debug lcd.
+

@@ -32,6 +32,10 @@
 #include "sde_dbg.h"
 #include "dsi_parser.h"
 
+#ifdef CONFIG_NUBIA_LCD_DISP_PREFERENCE
+#include "nubia_disp_preference.h"
+#endif
+
 #define to_dsi_display(x) container_of(x, struct dsi_display, host)
 #define INT_BASE_10 10
 #define NO_OVERRIDE -1
@@ -225,7 +229,8 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 
 	rc = dsi_panel_set_backlight(panel, (u32)bl_temp);
 	if (rc)
-		pr_err("unable to set backlight\n");
+		pr_err("unable to set backlight, rc=%d\n", rc);
+
 
 	rc = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
 			DSI_CORE_CLK, DSI_CLK_OFF);
@@ -581,6 +586,7 @@ static bool dsi_display_validate_reg_read(struct dsi_panel *panel)
 
 	for (j = 0; j < config->groups; ++j) {
 		for (i = 0; i < len; ++i) {
+			pr_debug(" return_buf[%d]=0x%x,status_value=0x%x\n",i,config->return_buf[i],config->status_value[group + i]);
 			if (config->return_buf[i] !=
 				config->status_value[group + i]) {
 				DRM_ERROR("mismatch: 0x%x\n",
@@ -779,7 +785,7 @@ static int dsi_display_status_check_te(struct dsi_display *display)
 	reinit_completion(&display->esd_te_gate);
 	if (!wait_for_completion_timeout(&display->esd_te_gate,
 				esd_te_timeout)) {
-		pr_err("TE check failed\n");
+		pr_err("[%s]TE check failed\n", display->name);
 		rc = -EINVAL;
 	}
 
@@ -2206,6 +2212,10 @@ static int dsi_display_parse_boot_display_selection(void)
 	int i, j;
 
 	for (i = 0; i < MAX_DSI_ACTIVE_DISPLAY; i++) {
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+		pr_err("i=%d, boot_param=%s\n", i, boot_displays[i].boot_param);
+		memset(disp_buf, 0, MAX_CMDLINE_PARAM_LEN);
+#endif
 		strlcpy(disp_buf, boot_displays[i].boot_param,
 			MAX_CMDLINE_PARAM_LEN);
 
@@ -2818,6 +2828,79 @@ static int dsi_host_detach(struct mipi_dsi_host *host,
 {
 	return 0;
 }
+
+#ifdef CONFIG_NUBIA_DEBUG_LCD_REG
+ssize_t dsi_panel_transfer_cmd(struct mipi_dsi_host *host,
+				const struct mipi_dsi_msg *msg)
+{
+	struct dsi_display *display;
+	int rc = 0, ret = 0;
+	int ctrl_idx;
+
+	if (!host || !msg) {
+		pr_err("[%s] dsi_host_transfer Invalid params\n", __FUNCTION__);
+		return 0;
+	}
+
+	display = to_dsi_display(host);
+
+	/* Avoid sending DCS commands when ESD recovery is pending */
+	if (atomic_read(&display->panel->esd_recovery_pending)) {
+		pr_debug("ESD recovery pending\n");
+		return 0;
+	}
+
+	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
+		   DSI_ALL_CLKS, DSI_CLK_ON);
+	if (rc) {
+		pr_err("[%s] failed to enable all DSI clocks, rc=%d\n",
+			display->name, rc);
+		goto error;
+	}
+
+	rc = dsi_display_cmd_engine_enable(display);
+	if (rc) {
+		pr_err("[%s] failed to enable cmd engine, rc=%d\n",
+			display->name, rc);
+		goto error_disable_clks;
+	}
+
+	if (display->tx_cmd_buf == NULL) {
+		rc = dsi_host_alloc_cmd_tx_buffer(display);
+		if (rc) {
+			pr_err("failed to allocate cmd tx buffer memory\n");
+			goto error_disable_cmd_engine;
+		}
+	}
+
+	ctrl_idx = (msg->flags & MIPI_DSI_MSG_UNICAST) ?
+		   msg->ctrl : 0;
+
+	rc = dsi_ctrl_cmd_transfer(display->ctrl[ctrl_idx].ctrl, msg,
+		(DSI_CTRL_CMD_FETCH_MEMORY | DSI_CTRL_CMD_READ |
+		DSI_CTRL_CMD_CUSTOM_DMA_SCHED | DSI_CTRL_CMD_LAST_COMMAND)); /*DSI_CTRL_CMD_READ*/
+	if (rc <= 0) {
+		pr_err("[%s] cmd transfer failed, rc=%d\n",
+			display->name, rc);
+		goto error_disable_cmd_engine;
+	}
+error_disable_cmd_engine:
+	ret = dsi_display_cmd_engine_disable(display);
+	if (ret) {
+		pr_err("[%s]failed to disable DSI cmd engine, rc=%d\n",
+			display->name, ret);
+	}
+error_disable_clks:
+	ret = dsi_display_clk_ctrl(display->dsi_clk_handle,
+		DSI_ALL_CLKS, DSI_CLK_OFF);
+	if (ret) {
+		pr_err("[%s] failed to disable all DSI clocks, rc=%d\n",
+			display->name, ret);
+	}
+error:
+	return rc;
+}
+#endif
 
 static ssize_t dsi_host_transfer(struct mipi_dsi_host *host,
 				 const struct mipi_dsi_msg *msg)
@@ -5437,6 +5520,10 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 		if (boot_disp->boot_disp_en) {
 			if (!strcmp(boot_disp->name, name)) {
 				disp_node = np;
+#ifdef CONFIG_NUBIA_LCD_DISP_PREFERENCE
+				pr_err("get dsi_type in bootloader\n");
+				nubia_set_dsi_ctrl(display, dsi_type);
+#endif
 				break;
 			}
 			continue;
@@ -5444,6 +5531,10 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 
 		if (of_property_read_bool(np, disp_active)) {
 			disp_node = np;
+#ifdef CONFIG_NUBIA_LCD_DISP_PREFERENCE
+			pr_err("get dsi_type in dts\n");
+			nubia_set_dsi_ctrl(display, dsi_type);
+#endif
 
 			if (IS_ENABLED(CONFIG_DSI_PARSER))
 				firm_req = !request_firmware_nowait(
@@ -7444,6 +7535,20 @@ int dsi_display_pre_commit(void *display,
 
 	return rc;
 }
+
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+int nubia_dsi_display_aod(struct dsi_display *display, uint32_t state)
+{
+	int rc = 0;
+
+	mutex_lock(&display->display_lock);
+	rc = nubia_dsi_panel_aod(display->panel, state);
+	display->drm_dev->aod_mode = state;
+	mutex_unlock(&display->display_lock);
+
+	return rc;
+}
+#endif
 
 int dsi_display_enable(struct dsi_display *display)
 {

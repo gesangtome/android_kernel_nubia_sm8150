@@ -2719,7 +2719,9 @@ next:
 			blk_finish_plug(&plug);
 			mutex_unlock(&dcc->cmd_lock);
 			trimmed += __wait_all_discard_cmd(sbi, NULL);
-			congestion_wait(BLK_RW_ASYNC, HZ/50);
+			schedule();
+			/* Remove this , do not need wait, for speed */
+			//congestion_wait(BLK_RW_ASYNC, HZ/50);
 			goto next;
 		}
 skip:
@@ -2730,6 +2732,13 @@ skip:
 
 		if (fatal_signal_pending(current))
 			break;
+#ifdef CONFIG_NUBIA_F2FS_TRIM_STAT
+		if(sbi->trim_stat == NUBIA_F2FS_EXIT_TRIM) {
+			f2fs_msg(sbi->sb, KERN_WARNING, "input trim stat is %d, must exit!", sbi->trim_stat);
+			sbi->trim_stat = NUBAI_F2FS_NO_TRIMED;
+		break;
+		}
+#endif
 	}
 
 	blk_finish_plug(&plug);
@@ -2761,6 +2770,10 @@ int f2fs_trim_fs(struct f2fs_sb_info *sbi, struct fstrim_range *range)
 			"Found FS corruption, run fsck to fix.");
 		return -EIO;
 	}
+#ifdef CONFIG_NUBIA_F2FS_TRIM_STAT
+	sbi->trim_stat = NUBAI_F2FS_TRIMING;
+	f2fs_msg(sbi->sb, KERN_WARNING, "trimmed start, trim_stat is %d.", sbi->trim_stat);
+#endif
 
 	/* start/end segment number in main_area */
 	start_segno = (start <= MAIN_BLKADDR(sbi)) ? 0 : GET_SEGNO(sbi, start);
@@ -2791,8 +2804,11 @@ int f2fs_trim_fs(struct f2fs_sb_info *sbi, struct fstrim_range *range)
 	 * discard option. User configuration looks like using runtime discard
 	 * or periodic fstrim instead of it.
 	 */
+#ifdef CONFIG_NUBIA_F2FS_TRIM_STAT
+#else
 	if (f2fs_realtime_discard_enable(sbi))
 		goto out;
+#endif
 
 	start_block = START_BLOCK(sbi, start_segno);
 	end_block = START_BLOCK(sbi, end_segno + 1);
@@ -2806,6 +2822,12 @@ int f2fs_trim_fs(struct f2fs_sb_info *sbi, struct fstrim_range *range)
 out:
 	if (!err)
 		range->len = F2FS_BLK_TO_BYTES(trimmed);
+#ifdef CONFIG_NUBIA_F2FS_TRIM_STAT
+	/* Set trim_stat is trimed */
+	sbi->trim_stat = NUBAI_F2FS_TRIMED;
+	f2fs_msg(sbi->sb, KERN_WARNING, "trimmed is %lld, trim_stat is %d.",
+	range->len, sbi->trim_stat);
+#endif
 	return err;
 }
 

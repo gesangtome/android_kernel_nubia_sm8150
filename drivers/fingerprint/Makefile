@@ -1,0 +1,1 @@
+obj-$(CONFIG_NUBIA_FINGERPRINT)	+= gf5288/

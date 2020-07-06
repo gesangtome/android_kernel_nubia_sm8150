@@ -749,6 +749,14 @@ menuconfig CGROUPS
 
 if CGROUPS
 
+config NUBIA_CGF_NOTIFY_EVENT
+	bool "Freezer cgroup event notifier"
+	default n
+	help
+	  Provides a way of notifing the cgroup freezer to migrate the tasks.
+	  For example: migrate the FROZEN task to THAWED crgoup while OOM or LMK
+	  send a SIGKILL signal to a FROZEN task.
+
 config PAGE_COUNTER
        bool
 

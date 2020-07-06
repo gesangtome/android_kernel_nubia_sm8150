@@ -579,6 +579,23 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
 #ifdef CONFIG_DEBUG_FS
 #include <linux/seq_file.h>
 
+#ifdef CONFIG_NUBIA_SKIP_TZ_AC_GPIO
+static bool is_tz_mask(unsigned gpio)
+{
+	/* gpio 0~3 and 81~84 is protected by TZ(IS_PERSISTENT=1), so we must skip it */
+	switch (gpio) {
+		case 126:
+		case 127:
+		case 128:
+		case 129:
+			return true;
+			break;
+		default:
+			return false;
+	}
+}
+#endif
+
 static void msm_gpio_dbg_show_one(struct seq_file *s,
 				  struct pinctrl_dev *pctldev,
 				  struct gpio_chip *chip,
@@ -602,6 +619,13 @@ static void msm_gpio_dbg_show_one(struct seq_file *s,
 	};
 
 	g = &pctrl->soc->groups[offset];
+#ifdef CONFIG_NUBIA_SKIP_TZ_AC_GPIO
+	if (is_tz_mask(offset)) {
+		printk(KERN_ERR"WARN: GPIO%d is protected by TZ, skip!!\n", offset);
+		seq_printf(s, " %-8s: protected by TZ", g->name);
+		return;
+	}
+#endif
 	base = reassign_pctrl_reg(pctrl->soc, offset);
 	ctl_reg = readl(base + g->ctl_reg);
 

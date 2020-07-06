@@ -40,6 +40,53 @@ struct msm_drm_notifier {
 	void *data;
 };
 
+#ifdef CONFIG_NUBIA_SWITCH_LCD
+/* A hardware display blank change occurred */
+#define MSM_DRM_SWITCH_EVENT_BLANK			0x01
+/* A hardware display blank early change occurred */
+#define MSM_DRM_SWITCH_EARLY_EVENT_BLANK		0x02
+/* A hardware display AOD ON or OFF mode change occurred */
+#define MSM_DRM_AOD_EVENT              0x04
+
+enum {
+	/* major panel: power on */
+	MSM_DRM_MAJOR_BLANK_UNBLANK,
+	/* major panel: power off */
+	MSM_DRM_MAJOR_POWERDOWN,
+	/* slave panel: power on */
+	MSM_DRM_SLAVE_BLANK_UNBLANK,
+	/* slave panel: power off */
+	MSM_DRM_SLAVE_POWERDOWN,
+	/* major panel: aod on */
+	MSM_DRM_MAJOR_AOD_ON,
+	/* major panel: aod off */
+	MSM_DRM_MAJOR_AOD_OFF,
+	/* slave panel: aod on */
+	MSM_DRM_SLAVE_AOD_ON,
+	/* slave panel: aod off */
+	MSM_DRM_SLAVE_AOD_OFF,
+	/* back panel light */
+	BACK_SCREEN_EFFECT,
+	/* panel ready state:ready front lcd on or back lcd on */
+	PANEL_READY_STATE
+};
+
+enum msm_drm_switch_display_id {
+	/* major display */
+	MSM_DRM_SWITCH_MAJOR_PANEL,
+	/* slave display */
+	MSM_DRM_SWITCH_SLAVE_PANEL
+};
+
+struct msm_drm_panel_notifier {
+	enum msm_drm_switch_display_id id;
+	/* transfer panel status*/
+	void *data;
+};
+int msm_drm_panel_register_client(struct notifier_block *nb);
+int msm_drm_panel_unregister_client(struct notifier_block *nb);
+#endif
+
 int msm_drm_register_client(struct notifier_block *nb);
 int msm_drm_unregister_client(struct notifier_block *nb);
 #endif

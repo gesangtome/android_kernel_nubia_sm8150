@@ -1997,11 +1997,15 @@ __netlink_kernel_create(struct net *net, int unit, struct module *module,
 	if (unit < 0 || unit >= MAX_LINKS)
 		return NULL;
 
-	if (sock_create_lite(PF_NETLINK, SOCK_DGRAM, unit, &sock))
+	if (sock_create_lite(PF_NETLINK, SOCK_DGRAM, unit, &sock)) {
+		pr_err("sock_create_lite fail");
 		return NULL;
+	}
 
-	if (__netlink_create(net, sock, cb_mutex, unit, 1) < 0)
+	if (__netlink_create(net, sock, cb_mutex, unit, 1) < 0) {
+		pr_err("__netlink_create fail");
 		goto out_sock_release_nosk;
+	}
 
 	sk = sock->sk;
 
@@ -2011,15 +2015,19 @@ __netlink_kernel_create(struct net *net, int unit, struct module *module,
 		groups = cfg->groups;
 
 	listeners = kzalloc(sizeof(*listeners) + NLGRPSZ(groups), GFP_KERNEL);
-	if (!listeners)
+	if (!listeners) {
+		pr_err("kzalloc listeners fail");
 		goto out_sock_release;
+	}
 
 	sk->sk_data_ready = netlink_data_ready;
 	if (cfg && cfg->input)
 		nlk_sk(sk)->netlink_rcv = cfg->input;
 
-	if (netlink_insert(sk, 0))
+	if (netlink_insert(sk, 0)) {
+		pr_err("netlink_insert fail");
 		goto out_sock_release;
+	}
 
 	nlk = nlk_sk(sk);
 	nlk->flags |= NETLINK_F_KERNEL_SOCKET;

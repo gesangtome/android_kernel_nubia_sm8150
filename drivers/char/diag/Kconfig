@@ -24,6 +24,13 @@ config DIAG_OVER_USB
 	  traffic over USB. This allows for host side tools to parse and display
 	  Diag traffic from the USB endpoint.
 
+config NUBIA_DIAG_REBOOT_CMD
+	bool "Enable DIAG handle reboot cmd"
+        depends on ARCH_QCOM
+	default n
+	help
+	 This feature helps reboot cmd by diag.
+
 config DIAGFWD_BRIDGE_CODE
 	bool "Enable remote DIAG traffic over MHI/HSIC"
 	depends on DIAG_CHAR

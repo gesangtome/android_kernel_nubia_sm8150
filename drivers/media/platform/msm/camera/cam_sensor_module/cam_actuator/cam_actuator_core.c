@@ -19,6 +19,10 @@
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
 
+extern int32_t msm_ois_lc898124_init_AF(struct camera_io_master ois_master);
+extern void msm_ois_lc898124_write_dac(unsigned int data);
+extern void msm_ois_lc898124_deinit( void );
+
 int32_t cam_actuator_construct_default_power_setting(
 	struct cam_sensor_power_ctrl_t *power_info)
 {
@@ -586,10 +590,15 @@ int32_t cam_actuator_i2c_pkt_parse(struct cam_actuator_ctrl_t *a_ctrl,
 				goto rel_pkt_buf;
 			}
 			a_ctrl->cam_act_state = CAM_ACTUATOR_CONFIG;
+			if (a_ctrl->io_master_info.cci_client->sid == 0x3E) {
+				rc = msm_ois_lc898124_init_AF(a_ctrl->io_master_info);
+			}
 		}
 
+		if (a_ctrl->io_master_info.cci_client->sid != 0x3E) {
 		rc = cam_actuator_apply_settings(a_ctrl,
 			&a_ctrl->i2c_data.init_settings);
+		}
 		if (rc < 0) {
 			CAM_ERR(CAM_ACTUATOR, "Cannot apply Init settings");
 			goto rel_pkt_buf;
@@ -743,6 +752,7 @@ int32_t cam_actuator_driver_cmd(struct cam_actuator_ctrl_t *a_ctrl,
 	struct cam_control *cmd = (struct cam_control *)arg;
 	struct cam_actuator_soc_private *soc_private = NULL;
 	struct cam_sensor_power_ctrl_t  *power_info = NULL;
+	struct i2c_settings_list *i2c_list;
 
 	if (!a_ctrl || !cmd) {
 		CAM_ERR(CAM_ACTUATOR, "Invalid Args");
@@ -815,6 +825,9 @@ int32_t cam_actuator_driver_cmd(struct cam_actuator_ctrl_t *a_ctrl,
 		}
 
 		if (a_ctrl->cam_act_state == CAM_ACTUATOR_CONFIG) {
+			if (a_ctrl->io_master_info.cci_client->sid == 0x3E) {
+				msm_ois_lc898124_deinit();
+			}
 			rc = cam_actuator_power_down(a_ctrl);
 			if (rc < 0) {
 				CAM_ERR(CAM_ACTUATOR,
@@ -919,8 +932,14 @@ int32_t cam_actuator_driver_cmd(struct cam_actuator_ctrl_t *a_ctrl,
 
 		if (a_ctrl->setting_apply_state ==
 			ACT_APPLY_SETTINGS_NOW) {
+			if (a_ctrl->io_master_info.cci_client->sid == 0x3E) {
+				list_for_each_entry(i2c_list, &(a_ctrl->i2c_data.init_settings.list_head), list) {
+					msm_ois_lc898124_write_dac(i2c_list->i2c_settings.reg_setting->reg_data);
+				}
+		} else {
 			rc = cam_actuator_apply_settings(a_ctrl,
 				&a_ctrl->i2c_data.init_settings);
+		}
 			if (rc < 0)
 				CAM_ERR(CAM_ACTUATOR,
 					"Cannot apply Update settings");
