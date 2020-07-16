@@ -35,6 +35,10 @@ do { \
                                         LOG_TAG, __FUNCTION__, __LINE__, ##args); \
 } while (0)
 
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+#define BRTN_DIV_N  4
+#endif
+
 #define TRILED_REG_TYPE			0x04
 #define TRILED_REG_SUBTYPE		0x05
 #define TRILED_REG_EN_CTL		0x46
@@ -268,10 +272,16 @@ static int qpnp_tri_led_set(struct qpnp_led_dev *led)
 
 	if (led->led_setting.blink) {
 		led->cdev.brightness = LED_FULL;
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+		led->cdev.brightness = LED_FULL/BRTN_DIV_N;
+#endif
 		led->blinking = true;
 		led->breathing = false;
 	} else if (led->led_setting.breath) {
 		led->cdev.brightness = LED_FULL;
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+		led->cdev.brightness = LED_FULL/BRTN_DIV_N;
+#endif
 		led->blinking = false;
 		led->breathing = true;
 	} else {
@@ -301,6 +311,12 @@ static int qpnp_tri_led_set_brightness(struct led_classdev *led_cdev,
 	}
 
 	led->led_setting.brightness = brightness;
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+    brightness = brightness/BRTN_DIV_N;
+	led->led_setting.brightness = brightness;
+    led_cdev->brightness = brightness;
+	LED_DEBUG("divide to %d, brightness=%d.\n", BRTN_DIV_N, brightness);
+#endif
 	if (!!brightness)
 		led->led_setting.off_ms = 0;
 	else
@@ -339,6 +355,12 @@ static int qpnp_tri_led_set_blink(struct led_classdev *led_cdev,
 		mutex_unlock(&led->lock);
 		return 0;
 	}
+
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+	led->cdev.brightness = led->cdev.brightness/BRTN_DIV_N;
+    led->led_setting.brightness = led->cdev.brightness;
+    LED_DEBUG("divide to %d, brightness=%d.\n", BRTN_DIV_N, led->cdev.brightness);
+#endif
 
 	if (*on_ms == 0) {
 		led->led_setting.blink = false;
@@ -429,6 +451,14 @@ static int nubia_light_breath_set(struct led_classdev *led_cdev, ST_BREATH_FEATU
 	led->led_setting.blink = false;
 	led->led_setting.breath = breath;
 	led->led_setting.brightness = breath ? LED_FULL : LED_OFF;
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+    led->led_setting.brightness = led->led_setting.brightness/BRTN_DIV_N;
+	led->cdev.brightness = led->led_setting.brightness;
+	LED_DEBUG("divide to %d, brightness=%d.\n", BRTN_DIV_N, led->cdev.brightness);
+	breath_param.min_grade = breath_param.min_grade/BRTN_DIV_N;
+	breath_param.max_grade = breath_param.max_grade/BRTN_DIV_N;
+	LED_DEBUG("divide to %d, mix_grade=%d max_grade=%d.\n", BRTN_DIV_N, breath_param.min_grade, breath_param.max_grade);
+#endif
 	led->pwm_setting.duty_ns = led->pwm_setting.pre_period_ns;
 	led->pwm_setting.period_ns = led->pwm_setting.pre_period_ns;
 
@@ -567,10 +597,16 @@ static ssize_t breath_feature_store(struct device *dev, struct device_attribute 
 				led->label, rc);
 	if (led->led_setting.blink) {
 		led->cdev.brightness = LED_FULL;
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+		led->cdev.brightness = LED_FULL/BRTN_DIV_N;
+#endif
 		led->blinking = true;
 		led->breathing = false;
 	} else if (led->led_setting.breath) {
 		led->cdev.brightness = LED_FULL;
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+		led->cdev.brightness = LED_FULL/BRTN_DIV_N;
+#endif
 		led->blinking = false;
 		led->breathing = true;
 	} else {
@@ -617,6 +653,11 @@ static ssize_t breath_store(struct device *dev, struct device_attribute *attr,
 	led->led_setting.blink = false;
 	led->led_setting.breath = breath;
 	led->led_setting.brightness = breath ? LED_FULL : LED_OFF;
+#ifdef CONFIG_ZTEMT_LED_BRIGHTNESS_CTL
+	led->led_setting.brightness = led->led_setting.brightness/BRTN_DIV_N;
+	led->cdev.brightness = led->led_setting.brightness;
+	LED_DEBUG("divide to %d, brightness=%d.\n", BRTN_DIV_N, led->cdev.brightness);
+#endif
 	rc = qpnp_tri_led_set(led);
 	if (rc < 0)
 		dev_err(led->chip->dev, "Set led failed for %s, rc=%d\n",

@@ -696,6 +696,12 @@ config ZTEMT_BREATH_LEDS
         help
           This macro just for nubia led feature.
 
+config ZTEMT_LED_BRIGHTNESS_CTL
+       tristate "LED support for Qualcomm Technologies, Inc. TRI_LED"
+        depends on LEDS_QTI_TRI_LED
+        help
+          This macro just for nubia led feature.
+          
 config LEDS_SYSCON
 	bool "LED support for LEDs on system controllers"
 	depends on LEDS_CLASS=y
